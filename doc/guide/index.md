@@ -1,3 +1,6 @@
+0.x 是 KISSY 1.4.x 的 xtemplate
+
+
 # introduce xtemplate
 
 最近随着 nodejs 的流行，各个团队都在进行着探索，其中虽然不是最优，但是最传统，最流行的架构仍然是 mvc，而 v(template) 作为选型的重要一环在前端为主的团队中受到了格外的关注。
