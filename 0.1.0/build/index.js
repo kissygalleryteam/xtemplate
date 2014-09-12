@@ -9,9 +9,9 @@ build time: May 22 12:32
  xtemplate
 */
 
-KISSY.add("kg/xtemplate/0.1.0/index", ["kg/xtemplate/0.1.0/runtime", "kg/xtemplate/0.1.0/compiler"], function(S, require) {
-  var XTemplateRuntime = require("kg/xtemplate/0.1.0/runtime");
-  var compiler = require("kg/xtemplate/0.1.0/compiler");
+KISSY.add("kg/xtemplate/0.1.0/index", ["./runtime", "./compiler"], function(S, require) {
+  var XTemplateRuntime = require("./runtime");
+  var compiler = require("./compiler");
   var cache = XTemplate.cache = {};
   function compile(tpl, config) {
     var fn;
@@ -532,8 +532,8 @@ KISSY.add("kg/xtemplate/0.1.0/compiler/ast", [], function(S) {
   ast.IdNode.prototype.type = "id";
   return ast
 });
-KISSY.add("kg/xtemplate/0.1.0/compiler", ["kg/xtemplate/0.1.0/runtime", "./compiler/parser", "./compiler/ast"], function(S, require) {
-  var XTemplateRuntime = require("xtemplate/runtime");
+KISSY.add("kg/xtemplate/0.1.0/compiler", ["./runtime", "./compiler/parser", "./compiler/ast"], function(S, require) {
+  var XTemplateRuntime = require("./runtime");
   var parser = require("./compiler/parser");
   parser.yy = require("./compiler/ast");
   var doubleReg = /\\*"/g, singleReg = /\\*'/g, arrayPush = [].push, variableId = 0, xtemplateId = 0;
