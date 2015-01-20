@@ -1,1 +1,909 @@
-define("xtemplate/4.0.5/runtime",[],function(n,t,r){var e,i,a,o,f;e=function(n){function t(){var n="";for(var t in e)n+=t+"|";return n=n.slice(0,-1),a=new RegExp(n,"g")}var r,e={"&":"&amp;",">":"&gt;","<":"&lt;","`":"&#x60;","/":"&#x2F;",'"':"&quot;","'":"&#x27;"},i=/[&<>"'`]/,a=t(),o=/\\?\{([^{}]+)\}/g,f="undefined"!=typeof global?global:window,u=Object.prototype.toString;return n=r={isArray:Array.isArray||function(n){return"[object Array]"===u.call(n)},keys:Object.keys||function(n){var t,r=[];for(t in n)n.hasOwnProperty(t)&&r.push(t);return r},each:function(n,t,e){if(n){var i,a,o,f=0,u=n&&n.length,s=void 0===u||"[object Function]"===Object.prototype.toString.call(n);if(e=e||null,s)for(o=r.keys(n);f<o.length&&(i=o[f],t.call(e,n[i],i,n)!==!1);f++);else for(a=n[0];u>f&&t.call(e,a,f,n)!==!1;a=n[++f]);}return n},mix:function(n,t){for(var r in t)n[r]=t[r];return n},globalEval:function(n){f.execScript?f.execScript(n):!function(n){f.eval.call(f,n)}(n)},substitute:function(n,t,r){return"string"==typeof n&&t?n.replace(r||o,function(n,r){return"\\"===n.charAt(0)?n.slice(1):void 0===t[r]?"":t[r]}):n},escapeHtml:function(n){return n=""+n,i.test(n)?(n+"").replace(a,function(n){return e[n]}):n},merge:function(){for(var n=0,t=arguments.length,e={};t>n;n++){var i=arguments[n];i&&r.mix(e,i)}return e}}}(),i=function(n){function t(n,t,r){this.data=void 0!==n?n:{},r?(this.parent=r,this.root=r.root):(this.parent=void 0,this.root=this),this.affix=t||{},this.ready=!1}return t.prototype={isScope:1,constructor:t,setParent:function(n){this.parent=n,this.root=n.root},set:function(n,t){this.affix[n]=t},setData:function(n){this.data=n},getData:function(){return this.data},mix:function(n){var t=this.affix;for(var r in n)t[r]=n[r]},get:function(n){var t,r=this.data,e=this.affix;return null!=r&&(t=r[n]),void 0!==t?t:e[n]},resolveInternalOuter:function(n){var t,r=n[0],e=this,i=e;if("this"===r)t=e.data;else if("root"===r)i=i.root,t=i.data;else{if(!r)return[i.data];do t=i.get(r);while(void 0===t&&(i=i.parent))}return[void 0,t]},resolveInternal:function(n){var t=this.resolveInternalOuter(n);if(1===t.length)return t[0];var r,e=n.length,i=t[1];if(void 0===i)return void 0;for(r=1;e>r;r++)i=i[n[r]];return i},resolveLooseInternal:function(n){var t=this.resolveInternalOuter(n);if(1===t.length)return t[0];var r,e=n.length,i=t[1];for(r=1;null!=i&&e>r;r++)i=i[n[r]];return i},resolveUp:function(n){return this.parent&&this.parent.resolveInternal(n)},resolveLooseUp:function(n){return this.parent&&this.parent.resolveLooseInternal(n)},resolveOuter:function(n,t){var r,e=this,i=e;if(!t&&1===n.length){if(r=e.get(n[0]),void 0!==r)return[r];t=1}if(t)for(;i&&t--;)i=i.parent;return i?[void 0,i]:[void 0]},resolveLoose:function(n,t){var r=this.resolveOuter(n,t);return 1===r.length?r[0]:r[1].resolveLooseInternal(n)},resolve:function(n,t){var r=this.resolveOuter(n,t);return 1===r.length?r[0]:r[1].resolveInternal(n)}},n=t}(),a=function(n){function t(n,t,r){this.list=n,this.init(),this.next=t,this.ready=!1,this.tpl=r}function r(n,r){var e=this;e.config=r,e.head=new t(e,void 0),e.callback=n,this.init()}var i=e;return t.prototype={constructor:t,isBuffer:1,init:function(){this.data=""},append:function(n){return this.data+=n,this},write:function(n){if(null!=n){if(n.isBuffer)return n;this.data+=n}return this},writeEscaped:function(n){if(null!=n){if(n.isBuffer)return n;this.data+=i.escapeHtml(n)}return this},insert:function(){var n=this,r=n.list,e=n.tpl,i=new t(r,n.next,e),a=new t(r,i,e);return n.next=a,n.ready=!0,a},async:function(n){var t=this.insert(),r=t.next;return n(t),r},error:function(n){var t=this.list.callback;if(t){var r=this.tpl;if(r){n instanceof Error||(n=new Error(n));var e=r.name,i=r.pos.line,a="XTemplate error in file: "+e+" at line "+i+": ";n.stack=a+n.stack,n.message=a+n.message,n.xtpl={pos:{line:i},name:e}}this.list.callback=null,t(n,void 0)}},end:function(){var n=this;return n.list.callback&&(n.ready=!0,n.list.flush()),n}},r.prototype={constructor:r,init:function(){this.data=""},append:function(n){this.data+=n},end:function(){this.callback(null,this.data),this.callback=null},flush:function(){for(var n=this,t=n.head;t;){if(!t.ready)return n.head=t,void 0;this.data+=t.data,t=t.next}n.end()}},r.Buffer=t,n=r}(),o=function(n){var t=i,r=e,a={range:function(n,t){var r=t.params,e=r[0],i=r[1],a=r[2];a?(e>i&&a>0||i>e&&0>a)&&(a=-a):a=e>i?-1:1;for(var o=[],f=e;i>e?i>f:f>i;f+=a)o.push(f);return o},foreach:function(n,r,e){var i,a,o,f,u=r.params,s=u[0],l=u[2]||"xindex",c=u[1];if(s)for(i=s.length,f=0;i>f;f++)a=new t(s[f],{xcount:i,xindex:f},n),o=a.affix,"xindex"!==l&&(o[l]=f,o.xindex=void 0),c&&(o[c]=s[f]),e=r.fn(a,e);return e},forin:function(n,r,e){var i,a,o,f=r.params,u=f[0],s=f[2]||"xindex",l=f[1];if(u)for(o in u)i=new t(u[o],{xindex:o},n),a=i.affix,"xindex"!==s&&(a[s]=o,a.xindex=void 0),l&&(a[l]=u[o]),e=r.fn(i,e);return e},each:function(n,t,e){var i=t.params,o=i[0];return o?r.isArray(o)?a.foreach(n,t,e):a.forin(n,t,e):e},"with":function(n,r,e){var i=r.params,a=i[0];if(a){var o=new t(a,void 0,n);e=r.fn(o,e)}return e},"if":function(n,t,r){var e=t.params,i=e[0];if(i){var a=t.fn;a&&(r=a(n,r))}else{var o=!1,f=t.elseIfs,u=t.inverse;if(f)for(var s=0,l=f.length;l>s;s++){var c=f[s];if(o=c.test(n)){r=c.fn(n,r);break}}!o&&u&&(r=u(n,r))}return r},set:function(n,t,r){return n.mix(t.hash),r},include:1,parse:1,extend:1,block:function(n,t,r){var e,i=this,a=i.runtime,o=t.params,f=o[0];2===o.length&&(e=o[0],f=o[1]);var u,s=a.blocks=a.blocks||{},l=s[f],c={fn:t.fn,type:e};if(l){if(l.type)if("append"===l.type)c.next=l,s[f]=c;else if("prepend"===l.type){var d;for(u=l;u&&"prepend"===u.type;)d=u,u=u.next;c.next=u,d.next=c}}else s[f]=c;if(!a.extendTpl)for(u=s[f];u;)u.fn&&(r=u.fn.call(i,n,r)),u=u.next;return r},macro:function(n,r,e){var i=r.hash,a=r.params,o=a[0],f=a.slice(1),u=this,s=u.runtime,l=s.macros=s.macros||{},c=l[o];if(r.fn)l[o]={paramNames:f,hash:i,fn:r.fn};else if(c){var d,v=c.hash||{};if(d=c.paramNames)for(var h=0,p=d.length;p>h;h++){var m=d[h];v[m]=f[h]}if(i)for(var x in i)v[x]=i[x];var g=new t(v);g.root=n.root,e=c.fn.call(u,g,e)}else{var y="can not find macro: "+o;e.error(y)}return e}};return a["debugger"]=function(){},n=a}(),f=function(n){function t(n,t,r,e,i,a,o,f){this.name=n,this.originalName=a||n,this.runtime=t,this.root=r,this.pos={line:1},this.scope=e,this.buffer=i,this.fn=o,this.parent=f}function r(n,t,r){var e=r[0],i=n&&n[e]||t&&t[e]||x[e];if(1===r.length)return i;if(i)for(var a=r.length,o=1;a>o;o++)if(i=i[r[o]],!i)return!1;return i}function f(n,t){var r=n.split("/"),e=t.split("/");r.pop();for(var i=0,a=e.length;a>i;i++){var o=e[i];"."===o||(".."===o?r.pop():r.push(o))}return r.join("/")}function u(n,t,e,i,a,o){var f,u,s;return o||(s=r(n.runtime.commands,n.root.config.commands,a)),s?s.call(n,t,e,i):s!==!1&&(f=t.resolve(a.slice(0,-1),o),u=f[a[a.length-1]])?u.apply(f,e.params||[]):(i.error("Command Not Found: "+a.join(".")),i)}function s(n,t){var r=this;r.fn=n,r.config=p.merge(s.globalConfig,t),this.subNameResolveCache={}}function l(n,t,r){if("."!==t.charAt(0))return t;var e=r+"_ks_"+t,i=n.subNameResolveCache,a=i[e];return a?a:t=i[e]=f(r,t)}function c(n,t,r,e,i,a){var o=l(n,a,i.name),f=e.insert(),u=f.next;return v(n,o,i.runtime,t,f,a,r,e.tpl),u}function d(n,r,e,i,a){var o=e.insert(),f=o.next,u=new t(a.TPL_NAME,i.runtime,n,r,o,void 0,a,e.tpl);return o.tpl=u,h(u),f}function v(n,r,e,i,a,o,f,u){var s=new t(r,e,n,i,a,o,void 0,u);a.tpl=s,n.config.loader.load(s,function(n,t){"function"==typeof t?(s.fn=t,h(s)):n?a.error(n):(t=t||"",f?a.writeEscaped(t):a.data+=t,a.end())})}function h(n){var t=n.fn();if(t){var r,e=n.runtime,i=e.extendTpl;if(i&&(r=i.params[0],!r))return t.error("extend command required a non-empty parameter");var a=e.extendTplFn,o=e.extendTplBuffer;return a?(e.extendTpl=null,e.extendTplBuffer=null,e.extendTplFn=null,d(n.root,n.scope,o,n,a).end()):r&&(e.extendTpl=null,e.extendTplBuffer=null,c(n.root,n.scope,0,o,n,r).end()),t.end()}}var p=e,m=o,x={},g=i,y=a,b={callFn:u,callDataFn:function(n,t){for(var r=t[0],e=r,i=1;i<t.length;i++){var a=t[i];if(!e||null==e[a])return"";r=e,e=e[a]}return e.apply(r,n||[])},callCommand:function(n,t,r,e,i){return u(n,t,r,e,i)}};return p.mix(s,{config:function(n,t){var r=this.globalConfig=this.globalConfig||{};return arguments.length?(void 0!==t?r[n]=t:p.mix(r,n),void 0):r},nativeCommands:m,utils:b,util:p,addCommand:function(n,t){x[n]=t},removeCommand:function(n){delete x[n]}}),s.prototype={constructor:s,Scope:g,nativeCommands:m,utils:b,removeCommand:function(n){var t=this.config;t.commands&&delete t.commands[n]},addCommand:function(n,t){var r=this.config;r.commands=r.commands||{},r.commands[n]=t},include:function(n,t,r,e){var i,a=t.params;i=n;var o=t.hash,f=t&&t.escape;return o&&(i=new g(o,void 0,n)),a[0]?r=c(this,i,f,r,e,a[0]):r.error("include command required a non-empty parameter")},includeModule:function(n,t,r,e){var i=t.params,a=n,o=t.hash;return o&&(a=new g(o,void 0,n)),i[0]?r=d(this,a,r,e,i[0]):r.error("include command required a non-empty parameter")},render:function(n,r,e){var i="",a=this,o=a.fn,f=a.config;"function"==typeof r&&(e=r,r=null),r=r||{},e=e||function(n,t){if(n)throw n instanceof Error||(n=new Error(n)),n;i=t};var u=a.config.name;!u&&o&&o.TPL_NAME&&(u=o.TPL_NAME);var l;l=n instanceof g?n:new g(n);var c=new s.LinkedBuffer(e,f).head,d=new t(u,{commands:r.commands},a,l,c,u,o);return c.tpl=d,o?(h(d),i):(f.loader.load(d,function(n,t){t?(d.fn=a.fn=t,h(d)):n&&c.error(n)}),i)}},s.Scope=g,s.LinkedBuffer=y,n=s}(),r.exports=f});
+/**
+ * Generate by node-kpc
+ */
+KISSY.add('kg/xtemplate/4.0.5/runtime/util', function (S, require, exports, module) {
+    var htmlEntities = {
+            '&': '&amp;',
+            '>': '&gt;',
+            '<': '&lt;',
+            '`': '&#x60;',
+            '/': '&#x2F;',
+            '"': '&quot;',
+            '\'': '&#x27;'
+        };
+    var possibleEscapeHtmlReg = /[&<>"'`]/;
+    var escapeHtmlReg = getEscapeReg();
+    var SUBSTITUTE_REG = /\\?\{([^{}]+)\}/g;
+    var win = typeof global !== 'undefined' ? global : window;
+    function getEscapeReg() {
+        var str = '';
+        for (var entity in htmlEntities) {
+            str += entity + '|';
+        }
+        str = str.slice(0, -1);
+        escapeHtmlReg = new RegExp(str, 'g');
+        return escapeHtmlReg;
+    }
+    var util;
+    var toString = Object.prototype.toString;
+    module.exports = util = {
+        isArray: Array.isArray || function (obj) {
+            return toString.call(obj) === '[object Array]';
+        },
+        keys: Object.keys || function (o) {
+            var result = [];
+            var p;
+            for (p in o) {
+                if (o.hasOwnProperty(p)) {
+                    result.push(p);
+                }
+            }
+            return result;
+        },
+        each: function (object, fn, context) {
+            if (object) {
+                var key, val, keys;
+                var i = 0;
+                var length = object && object.length;
+                var isObj = length === undefined || Object.prototype.toString.call(object) === '[object Function]';
+                context = context || null;
+                if (isObj) {
+                    keys = util.keys(object);
+                    for (; i < keys.length; i++) {
+                        key = keys[i];
+                        if (fn.call(context, object[key], key, object) === false) {
+                            break;
+                        }
+                    }
+                } else {
+                    for (val = object[0]; i < length; val = object[++i]) {
+                        if (fn.call(context, val, i, object) === false) {
+                            break;
+                        }
+                    }
+                }
+            }
+            return object;
+        },
+        mix: function (t, s) {
+            for (var p in s) {
+                t[p] = s[p];
+            }
+            return t;
+        },
+        globalEval: function (data) {
+            if (win.execScript) {
+                win.execScript(data);
+            } else {
+                (function (data) {
+                    win['eval'].call(win, data);
+                }(data));
+            }
+        },
+        substitute: function (str, o, regexp) {
+            if (typeof str !== 'string' || !o) {
+                return str;
+            }
+            return str.replace(regexp || SUBSTITUTE_REG, function (match, name) {
+                if (match.charAt(0) === '\\') {
+                    return match.slice(1);
+                }
+                return o[name] === undefined ? '' : o[name];
+            });
+        },
+        escapeHtml: function (str) {
+            str = '' + str;
+            if (!possibleEscapeHtmlReg.test(str)) {
+                return str;
+            }
+            return (str + '').replace(escapeHtmlReg, function (m) {
+                return htmlEntities[m];
+            });
+        },
+        merge: function () {
+            var i = 0;
+            var len = arguments.length;
+            var ret = {};
+            for (; i < len; i++) {
+                var arg = arguments[i];
+                if (arg) {
+                    util.mix(ret, arg);
+                }
+            }
+            return ret;
+        }
+    };
+});
+/**
+ * Generate by node-kpc
+ */
+KISSY.add('kg/xtemplate/4.0.5/runtime/commands', [
+    './scope',
+    './util'
+], function (S, require, exports, module) {
+    var Scope = require('./scope');
+    var util = require('./util');
+    var commands = {
+            range: function (scope, option) {
+                var params = option.params;
+                var start = params[0];
+                var end = params[1];
+                var step = params[2];
+                if (!step) {
+                    step = start > end ? -1 : 1;
+                } else if (start > end && step > 0 || start < end && step < 0) {
+                    step = -step;
+                }
+                var ret = [];
+                for (var i = start; start < end ? i < end : i > end; i += step) {
+                    ret.push(i);
+                }
+                return ret;
+            },
+            foreach: function (scope, option, buffer) {
+                var params = option.params;
+                var param0 = params[0];
+                var xindexName = params[2] || 'xindex';
+                var valueName = params[1];
+                var xcount, opScope, affix, xindex;
+                if (param0) {
+                    xcount = param0.length;
+                    for (xindex = 0; xindex < xcount; xindex++) {
+                        opScope = new Scope(param0[xindex], {
+                            xcount: xcount,
+                            xindex: xindex
+                        }, scope);
+                        affix = opScope.affix;
+                        if (xindexName !== 'xindex') {
+                            affix[xindexName] = xindex;
+                            affix.xindex = undefined;
+                        }
+                        if (valueName) {
+                            affix[valueName] = param0[xindex];
+                        }
+                        buffer = option.fn(opScope, buffer);
+                    }
+                }
+                return buffer;
+            },
+            forin: function (scope, option, buffer) {
+                var params = option.params;
+                var param0 = params[0];
+                var xindexName = params[2] || 'xindex';
+                var valueName = params[1];
+                var opScope, affix, name;
+                if (param0) {
+                    for (name in param0) {
+                        opScope = new Scope(param0[name], { xindex: name }, scope);
+                        affix = opScope.affix;
+                        if (xindexName !== 'xindex') {
+                            affix[xindexName] = name;
+                            affix.xindex = undefined;
+                        }
+                        if (valueName) {
+                            affix[valueName] = param0[name];
+                        }
+                        buffer = option.fn(opScope, buffer);
+                    }
+                }
+                return buffer;
+            },
+            each: function (scope, option, buffer) {
+                var params = option.params;
+                var param0 = params[0];
+                if (param0) {
+                    if (util.isArray(param0)) {
+                        return commands.foreach(scope, option, buffer);
+                    } else {
+                        return commands.forin(scope, option, buffer);
+                    }
+                }
+                return buffer;
+            },
+            'with': function (scope, option, buffer) {
+                var params = option.params;
+                var param0 = params[0];
+                if (param0) {
+                    var opScope = new Scope(param0, undefined, scope);
+                    buffer = option.fn(opScope, buffer);
+                }
+                return buffer;
+            },
+            'if': function (scope, option, buffer) {
+                var params = option.params;
+                var param0 = params[0];
+                if (param0) {
+                    var fn = option.fn;
+                    if (fn) {
+                        buffer = fn(scope, buffer);
+                    }
+                } else {
+                    var matchElseIf = false;
+                    var elseIfs = option.elseIfs;
+                    var inverse = option.inverse;
+                    if (elseIfs) {
+                        for (var i = 0, len = elseIfs.length; i < len; i++) {
+                            var elseIf = elseIfs[i];
+                            matchElseIf = elseIf.test(scope);
+                            if (matchElseIf) {
+                                buffer = elseIf.fn(scope, buffer);
+                                break;
+                            }
+                        }
+                    }
+                    if (!matchElseIf && inverse) {
+                        buffer = inverse(scope, buffer);
+                    }
+                }
+                return buffer;
+            },
+            set: function (scope, option, buffer) {
+                scope.mix(option.hash);
+                return buffer;
+            },
+            include: 1,
+            parse: 1,
+            extend: 1,
+            block: function (scope, option, buffer) {
+                var self = this;
+                var runtime = self.runtime;
+                var params = option.params;
+                var blockName = params[0];
+                var type;
+                if (params.length === 2) {
+                    type = params[0];
+                    blockName = params[1];
+                }
+                var blocks = runtime.blocks = runtime.blocks || {};
+                var head = blocks[blockName], cursor;
+                var current = {
+                        fn: option.fn,
+                        type: type
+                    };
+                if (!head) {
+                    blocks[blockName] = current;
+                } else if (head.type) {
+                    if (head.type === 'append') {
+                        current.next = head;
+                        blocks[blockName] = current;
+                    } else if (head.type === 'prepend') {
+                        var prev;
+                        cursor = head;
+                        while (cursor && cursor.type === 'prepend') {
+                            prev = cursor;
+                            cursor = cursor.next;
+                        }
+                        current.next = cursor;
+                        prev.next = current;
+                    }
+                }
+                if (!runtime.extendTpl) {
+                    cursor = blocks[blockName];
+                    while (cursor) {
+                        if (cursor.fn) {
+                            buffer = cursor.fn.call(self, scope, buffer);
+                        }
+                        cursor = cursor.next;
+                    }
+                }
+                return buffer;
+            },
+            macro: function (scope, option, buffer) {
+                var hash = option.hash;
+                var params = option.params;
+                var macroName = params[0];
+                var params1 = params.slice(1);
+                var self = this;
+                var runtime = self.runtime;
+                var macros = runtime.macros = runtime.macros || {};
+                var macro = macros[macroName];
+                if (option.fn) {
+                    macros[macroName] = {
+                        paramNames: params1,
+                        hash: hash,
+                        fn: option.fn
+                    };
+                } else if (macro) {
+                    var paramValues = macro.hash || {};
+                    var paramNames;
+                    if (paramNames = macro.paramNames) {
+                        for (var i = 0, len = paramNames.length; i < len; i++) {
+                            var p = paramNames[i];
+                            paramValues[p] = params1[i];
+                        }
+                    }
+                    if (hash) {
+                        for (var h in hash) {
+                            paramValues[h] = hash[h];
+                        }
+                    }
+                    var newScope = new Scope(paramValues);
+                    newScope.root = scope.root;
+                    buffer = macro.fn.call(self, newScope, buffer);
+                } else {
+                    var error = 'can not find macro: ' + macroName;
+                    buffer.error(error);
+                }
+                return buffer;
+            }
+        };
+    commands['debugger'] = function () {
+        if ('@DEBUG@') {
+            util.globalEval('debugger');
+        }
+    };
+    module.exports = commands;
+});
+/**
+ * Generate by node-kpc
+ */
+KISSY.add('kg/xtemplate/4.0.5/runtime/scope', function (S, require, exports, module) {
+    function Scope(data, affix, parent) {
+        if (data !== undefined) {
+            this.data = data;
+        } else {
+            this.data = {};
+        }
+        if (parent) {
+            this.parent = parent;
+            this.root = parent.root;
+        } else {
+            this.parent = undefined;
+            this.root = this;
+        }
+        this.affix = affix || {};
+        this.ready = false;
+    }
+    Scope.prototype = {
+        isScope: 1,
+        constructor: Scope,
+        setParent: function (parentScope) {
+            this.parent = parentScope;
+            this.root = parentScope.root;
+        },
+        set: function (name, value) {
+            this.affix[name] = value;
+        },
+        setData: function (data) {
+            this.data = data;
+        },
+        getData: function () {
+            return this.data;
+        },
+        mix: function (v) {
+            var affix = this.affix;
+            for (var name in v) {
+                affix[name] = v[name];
+            }
+        },
+        get: function (name) {
+            var data = this.data;
+            var v;
+            var affix = this.affix;
+            if (data != null) {
+                v = data[name];
+            }
+            if (v !== undefined) {
+                return v;
+            }
+            return affix[name];
+        },
+        resolveInternalOuter: function (parts) {
+            var part0 = parts[0];
+            var v;
+            var self = this;
+            var scope = self;
+            if (part0 === 'this') {
+                v = self.data;
+            } else if (part0 === 'root') {
+                scope = scope.root;
+                v = scope.data;
+            } else if (part0) {
+                do {
+                    v = scope.get(part0);
+                } while (v === undefined && (scope = scope.parent));
+            } else {
+                return [scope.data];
+            }
+            return [
+                undefined,
+                v
+            ];
+        },
+        resolveInternal: function (parts) {
+            var ret = this.resolveInternalOuter(parts);
+            if (ret.length === 1) {
+                return ret[0];
+            }
+            var i;
+            var len = parts.length;
+            var v = ret[1];
+            if (v === undefined) {
+                return undefined;
+            }
+            for (i = 1; i < len; i++) {
+                v = v[parts[i]];
+            }
+            return v;
+        },
+        resolveLooseInternal: function (parts) {
+            var ret = this.resolveInternalOuter(parts);
+            if (ret.length === 1) {
+                return ret[0];
+            }
+            var i;
+            var len = parts.length;
+            var v = ret[1];
+            for (i = 1; v != null && i < len; i++) {
+                v = v[parts[i]];
+            }
+            return v;
+        },
+        resolveUp: function (parts) {
+            return this.parent && this.parent.resolveInternal(parts);
+        },
+        resolveLooseUp: function (parts) {
+            return this.parent && this.parent.resolveLooseInternal(parts);
+        },
+        resolveOuter: function (parts, depth) {
+            var self = this;
+            var scope = self;
+            var v;
+            if (!depth && parts.length === 1) {
+                v = self.get(parts[0]);
+                if (v !== undefined) {
+                    return [v];
+                } else {
+                    depth = 1;
+                }
+            }
+            if (depth) {
+                while (scope && depth--) {
+                    scope = scope.parent;
+                }
+            }
+            if (!scope) {
+                return [undefined];
+            }
+            return [
+                undefined,
+                scope
+            ];
+        },
+        resolveLoose: function (parts, depth) {
+            var ret = this.resolveOuter(parts, depth);
+            if (ret.length === 1) {
+                return ret[0];
+            }
+            return ret[1].resolveLooseInternal(parts);
+        },
+        resolve: function (parts, depth) {
+            var ret = this.resolveOuter(parts, depth);
+            if (ret.length === 1) {
+                return ret[0];
+            }
+            return ret[1].resolveInternal(parts);
+        }
+    };
+    module.exports = Scope;
+});
+/**
+ * Generate by node-kpc
+ */
+KISSY.add('kg/xtemplate/4.0.5/runtime/linked-buffer', ['./util'], function (S, require, exports, module) {
+    var util = require('./util');
+    function Buffer(list, next, tpl) {
+        this.list = list;
+        this.init();
+        this.next = next;
+        this.ready = false;
+        this.tpl = tpl;
+    }
+    Buffer.prototype = {
+        constructor: Buffer,
+        isBuffer: 1,
+        init: function () {
+            this.data = '';
+        },
+        append: function (data) {
+            this.data += data;
+            return this;
+        },
+        write: function (data) {
+            if (data != null) {
+                if (data.isBuffer) {
+                    return data;
+                } else {
+                    this.data += data;
+                }
+            }
+            return this;
+        },
+        writeEscaped: function (data) {
+            if (data != null) {
+                if (data.isBuffer) {
+                    return data;
+                } else {
+                    this.data += util.escapeHtml(data);
+                }
+            }
+            return this;
+        },
+        insert: function () {
+            var self = this;
+            var list = self.list;
+            var tpl = self.tpl;
+            var nextFragment = new Buffer(list, self.next, tpl);
+            var asyncFragment = new Buffer(list, nextFragment, tpl);
+            self.next = asyncFragment;
+            self.ready = true;
+            return asyncFragment;
+        },
+        async: function (fn) {
+            var asyncFragment = this.insert();
+            var nextFragment = asyncFragment.next;
+            fn(asyncFragment);
+            return nextFragment;
+        },
+        error: function (e) {
+            var callback = this.list.callback;
+            if (callback) {
+                var tpl = this.tpl;
+                if (tpl) {
+                    if (e instanceof Error) {
+                    } else {
+                        e = new Error(e);
+                    }
+                    var name = tpl.name;
+                    var line = tpl.pos.line;
+                    var errorStr = 'XTemplate error in file: ' + name + ' at line ' + line + ': ';
+                    e.stack = errorStr + e.stack;
+                    e.message = errorStr + e.message;
+                    e.xtpl = {
+                        pos: { line: line },
+                        name: name
+                    };
+                }
+                this.list.callback = null;
+                callback(e, undefined);
+            }
+        },
+        end: function () {
+            var self = this;
+            if (self.list.callback) {
+                self.ready = true;
+                self.list.flush();
+            }
+            return self;
+        }
+    };
+    function LinkedBuffer(callback, config) {
+        var self = this;
+        self.config = config;
+        self.head = new Buffer(self, undefined);
+        self.callback = callback;
+        this.init();
+    }
+    LinkedBuffer.prototype = {
+        constructor: LinkedBuffer,
+        init: function () {
+            this.data = '';
+        },
+        append: function (data) {
+            this.data += data;
+        },
+        end: function () {
+            this.callback(null, this.data);
+            this.callback = null;
+        },
+        flush: function () {
+            var self = this;
+            var fragment = self.head;
+            while (fragment) {
+                if (fragment.ready) {
+                    this.data += fragment.data;
+                } else {
+                    self.head = fragment;
+                    return;
+                }
+                fragment = fragment.next;
+            }
+            self.end();
+        }
+    };
+    LinkedBuffer.Buffer = Buffer;
+    module.exports = LinkedBuffer;
+});
+/**
+ * Generate by node-kpc
+ */
+KISSY.add('kg/xtemplate/4.0.5/runtime', [
+    './runtime/util',
+    './runtime/commands',
+    './runtime/scope',
+    './runtime/linked-buffer'
+], function (S, require, exports, module) {
+    var util = require('./runtime/util');
+    var nativeCommands = require('./runtime/commands');
+    var commands = {};
+    var Scope = require('./runtime/scope');
+    var LinkedBuffer = require('./runtime/linked-buffer');
+    function TplWrap(name, runtime, root, scope, buffer, originalName, fn, parent) {
+        this.name = name;
+        this.originalName = originalName || name;
+        this.runtime = runtime;
+        this.root = root;
+        this.pos = { line: 1 };
+        this.scope = scope;
+        this.buffer = buffer;
+        this.fn = fn;
+        this.parent = parent;
+    }
+    function findCommand(runtimeCommands, instanceCommands, parts) {
+        var name = parts[0];
+        var cmd = runtimeCommands && runtimeCommands[name] || instanceCommands && instanceCommands[name] || commands[name];
+        if (parts.length === 1) {
+            return cmd;
+        }
+        if (cmd) {
+            var len = parts.length;
+            for (var i = 1; i < len; i++) {
+                cmd = cmd[parts[i]];
+                if (!cmd) {
+                    return false;
+                }
+            }
+        }
+        return cmd;
+    }
+    function getSubNameFromParentName(parentName, subName) {
+        var parts = parentName.split('/');
+        var subParts = subName.split('/');
+        parts.pop();
+        for (var i = 0, l = subParts.length; i < l; i++) {
+            var subPart = subParts[i];
+            if (subPart === '.') {
+            } else if (subPart === '..') {
+                parts.pop();
+            } else {
+                parts.push(subPart);
+            }
+        }
+        return parts.join('/');
+    }
+    function callFn(tpl, scope, option, buffer, parts, depth) {
+        var caller, fn, command1;
+        if (!depth) {
+            command1 = findCommand(tpl.runtime.commands, tpl.root.config.commands, parts);
+        }
+        if (command1) {
+            return command1.call(tpl, scope, option, buffer);
+        } else if (command1 !== false) {
+            caller = scope.resolve(parts.slice(0, -1), depth);
+            fn = caller[parts[parts.length - 1]];
+            if (fn) {
+                return fn.apply(caller, option.params || []);
+            }
+        }
+        buffer.error('Command Not Found: ' + parts.join('.'));
+        return buffer;
+    }
+    var utils = {
+            callFn: callFn,
+            callDataFn: function (params, parts) {
+                var caller = parts[0];
+                var fn = caller;
+                for (var i = 1; i < parts.length; i++) {
+                    var name = parts[i];
+                    if (fn && fn[name] != null) {
+                        caller = fn;
+                        fn = fn[name];
+                    } else {
+                        return '';
+                    }
+                }
+                return fn.apply(caller, params || []);
+            },
+            callCommand: function (tpl, scope, option, buffer, parts) {
+                return callFn(tpl, scope, option, buffer, parts);
+            }
+        };
+    function XTemplateRuntime(fn, config) {
+        var self = this;
+        self.fn = fn;
+        self.config = util.merge(XTemplateRuntime.globalConfig, config);
+        this.subNameResolveCache = {};
+    }
+    util.mix(XTemplateRuntime, {
+        config: function (key, v) {
+            var globalConfig = this.globalConfig = this.globalConfig || {};
+            if (arguments.length) {
+                if (v !== undefined) {
+                    globalConfig[key] = v;
+                } else {
+                    util.mix(globalConfig, key);
+                }
+            } else {
+                return globalConfig;
+            }
+        },
+        nativeCommands: nativeCommands,
+        utils: utils,
+        util: util,
+        addCommand: function (commandName, fn) {
+            commands[commandName] = fn;
+        },
+        removeCommand: function (commandName) {
+            delete commands[commandName];
+        }
+    });
+    function resolve(self, subName, parentName) {
+        if (subName.charAt(0) !== '.') {
+            return subName;
+        }
+        var key = parentName + '_ks_' + subName;
+        var nameResolveCache = self.subNameResolveCache;
+        var cached = nameResolveCache[key];
+        if (cached) {
+            return cached;
+        }
+        subName = nameResolveCache[key] = getSubNameFromParentName(parentName, subName);
+        return subName;
+    }
+    function includeInternal(self, scope, escape, buffer, tpl, originalName) {
+        var name = resolve(self, originalName, tpl.name);
+        var newBuffer = buffer.insert();
+        var next = newBuffer.next;
+        loadInternal(self, name, tpl.runtime, scope, newBuffer, originalName, escape, buffer.tpl);
+        return next;
+    }
+    function includeModuleInternal(self, scope, buffer, tpl, tplFn) {
+        var newBuffer = buffer.insert();
+        var next = newBuffer.next;
+        var newTpl = new TplWrap(tplFn.TPL_NAME, tpl.runtime, self, scope, newBuffer, undefined, tplFn, buffer.tpl);
+        newBuffer.tpl = newTpl;
+        renderTpl(newTpl);
+        return next;
+    }
+    function loadInternal(self, name, runtime, scope, buffer, originalName, escape, parentTpl) {
+        var tpl = new TplWrap(name, runtime, self, scope, buffer, originalName, undefined, parentTpl);
+        buffer.tpl = tpl;
+        self.config.loader.load(tpl, function (error, tplFn) {
+            if (typeof tplFn === 'function') {
+                tpl.fn = tplFn;
+                renderTpl(tpl);
+            } else if (error) {
+                buffer.error(error);
+            } else {
+                tplFn = tplFn || '';
+                if (escape) {
+                    buffer.writeEscaped(tplFn);
+                } else {
+                    buffer.data += tplFn;
+                }
+                buffer.end();
+            }
+        });
+    }
+    function renderTpl(tpl) {
+        var buffer = tpl.fn();
+        if (buffer) {
+            var runtime = tpl.runtime;
+            var extendTpl = runtime.extendTpl;
+            var extendTplName;
+            if (extendTpl) {
+                extendTplName = extendTpl.params[0];
+                if (!extendTplName) {
+                    return buffer.error('extend command required a non-empty parameter');
+                }
+            }
+            var extendTplFn = runtime.extendTplFn;
+            var extendTplBuffer = runtime.extendTplBuffer;
+            if (extendTplFn) {
+                runtime.extendTpl = null;
+                runtime.extendTplBuffer = null;
+                runtime.extendTplFn = null;
+                includeModuleInternal(tpl.root, tpl.scope, extendTplBuffer, tpl, extendTplFn).end();
+            } else if (extendTplName) {
+                runtime.extendTpl = null;
+                runtime.extendTplBuffer = null;
+                includeInternal(tpl.root, tpl.scope, 0, extendTplBuffer, tpl, extendTplName).end();
+            }
+            return buffer.end();
+        }
+    }
+    XTemplateRuntime.prototype = {
+        constructor: XTemplateRuntime,
+        Scope: Scope,
+        nativeCommands: nativeCommands,
+        utils: utils,
+        removeCommand: function (commandName) {
+            var config = this.config;
+            if (config.commands) {
+                delete config.commands[commandName];
+            }
+        },
+        addCommand: function (commandName, fn) {
+            var config = this.config;
+            config.commands = config.commands || {};
+            config.commands[commandName] = fn;
+        },
+        include: function (scope, option, buffer, tpl) {
+            var params = option.params;
+            var newScope;
+            newScope = scope;
+            var hash = option.hash;
+            var escape = option && option.escape;
+            if (hash) {
+                newScope = new Scope(hash, undefined, scope);
+            }
+            if (!params[0]) {
+                return buffer.error('include command required a non-empty parameter');
+            }
+            buffer = includeInternal(this, newScope, escape, buffer, tpl, params[0]);
+            return buffer;
+        },
+        includeModule: function (scope, option, buffer, tpl) {
+            var params = option.params;
+            var newScope = scope;
+            var hash = option.hash;
+            if (hash) {
+                newScope = new Scope(hash, undefined, scope);
+            }
+            if (!params[0]) {
+                return buffer.error('include command required a non-empty parameter');
+            }
+            buffer = includeModuleInternal(this, newScope, buffer, tpl, params[0]);
+            return buffer;
+        },
+        render: function (data, option, callback) {
+            var html = '';
+            var self = this;
+            var fn = self.fn;
+            var config = self.config;
+            if (typeof option === 'function') {
+                callback = option;
+                option = null;
+            }
+            option = option || {};
+            callback = callback || function (error, ret) {
+                if (error) {
+                    if (!(error instanceof Error)) {
+                        error = new Error(error);
+                    }
+                    throw error;
+                }
+                html = ret;
+            };
+            var name = self.config.name;
+            if (!name && fn && fn.TPL_NAME) {
+                name = fn.TPL_NAME;
+            }
+            var scope;
+            if (data instanceof Scope) {
+                scope = data;
+            } else {
+                scope = new Scope(data);
+            }
+            var buffer = new XTemplateRuntime.LinkedBuffer(callback, config).head;
+            var tpl = new TplWrap(name, { commands: option.commands }, self, scope, buffer, name, fn);
+            buffer.tpl = tpl;
+            if (!fn) {
+                config.loader.load(tpl, function (err, fn) {
+                    if (fn) {
+                        tpl.fn = self.fn = fn;
+                        renderTpl(tpl);
+                    } else if (err) {
+                        buffer.error(err);
+                    }
+                });
+                return html;
+            }
+            renderTpl(tpl);
+            return html;
+        }
+    };
+    XTemplateRuntime.Scope = Scope;
+    XTemplateRuntime.LinkedBuffer = LinkedBuffer;
+    module.exports = XTemplateRuntime;
+});
