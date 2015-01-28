@@ -1,20 +1,20 @@
 /*
-Copyright 2015, xtemplate@4.0.4
+Copyright 2015, xtemplate@4.1.0
 MIT Licensed
-build time: Tue, 13 Jan 2015 10:58:37 GMT
+build time: Wed, 28 Jan 2015 10:21:30 GMT
 */
-define("kg/xtemplate/4.0.4/index", ["kg/xtemplate/4.0.4/runtime"], function(require, exports, module) {
-var xtemplate404Runtime = require("kg/xtemplate/4.0.4/runtime");
+define("kg/xtemplate/4.1.0/index", ["kg/xtemplate/4.1.0/runtime"], function(require, exports, module) {
+var xtemplate410Runtime = require("kg/xtemplate/4.1.0/runtime");
 /*
 combined modules:
-xtemplate/4.0.4/index
-xtemplate/4.0.4/compiler
-xtemplate/4.0.4/compiler/tools
-xtemplate/4.0.4/compiler/parser
-xtemplate/4.0.4/compiler/ast
+xtemplate/4.1.0/index
+xtemplate/4.1.0/compiler
+xtemplate/4.1.0/compiler/tools
+xtemplate/4.1.0/compiler/parser
+xtemplate/4.1.0/compiler/ast
 */
-var xtemplate404CompilerTools, xtemplate404CompilerParser, xtemplate404CompilerAst, xtemplate404Compiler, xtemplate404Index;
-xtemplate404CompilerTools = function (exports) {
+var xtemplate410CompilerTools, xtemplate410CompilerParser, xtemplate410CompilerAst, xtemplate410Compiler, xtemplate410Index;
+xtemplate410CompilerTools = function (exports) {
   /**
    * compiler tools
    */
@@ -23,17 +23,24 @@ xtemplate404CompilerTools = function (exports) {
   var arrayPush = [].push;
   var globals = {};
   globals['undefined'] = globals['null'] = globals['true'] = globals['false'] = 1;
-  function genStackJudge(parts, data, count) {
+  function genStackJudge(parts, data, count, lastVariable) {
     if (!parts.length) {
       return data;
     }
+    lastVariable = lastVariable || data;
     count = count || 0;
     var part0 = parts[0];
-    if (parts.length === 1) {
-      return '(' + data + part0 + ')';
-    }
     var variable = 't' + count;
-    return '((' + variable + '=' + data + part0 + ') != null?' + genStackJudge(parts.slice(1), variable, ++count) + ':' + variable + ')';
+    return [
+      '(' + data + ' != null ? ',
+      genStackJudge(parts.slice(1), '(' + variable + '=' + lastVariable + part0 + ')', ++count, variable),
+      ' : ',
+      lastVariable,
+      ')'
+    ].join('');
+  }
+  function accessVariable(loose, parts, topVariable, fullVariable) {
+    return loose ? genStackJudge(parts.slice(1), topVariable) : fullVariable;
   }
   var tools = exports = {
     genStackJudge: genStackJudge,
@@ -45,8 +52,8 @@ xtemplate404CompilerTools = function (exports) {
     },
     chainedVariableRead: function (self, source, idParts, root, resolveUp, loose) {
       var strs = tools.convertIdPartsToRawAccessor(self, source, idParts);
-      var part0 = strs.parts[0];
       var parts = strs.parts;
+      var part0 = parts[0];
       var scope = '';
       if (root) {
         scope = 'scope.root.';
@@ -56,20 +63,20 @@ xtemplate404CompilerTools = function (exports) {
       var ret = [
         '(',
         '(t=(' + affix + part0 + ')) !== undefined ? ',
-        idParts.length > 1 ? affix + strs.str : 't',
-        ':'
+        idParts.length > 1 ? accessVariable(loose, parts, 't', affix + strs.str) : 't',
+        ' : '
       ];
       if (resolveUp) {
         ret = ret.concat([
           '(',
           '(t = ' + data + part0 + ') !== undefined ? ',
-          idParts.length > 1 ? loose ? genStackJudge(parts.slice(1), 't') : data + strs.str : 't',
-          ' :',
+          idParts.length > 1 ? accessVariable(loose, parts, 't', data + strs.str) : 't',
+          '  : ',
           loose ? 'scope.resolveLooseUp(' + strs.arr + ')' : 'scope.resolveUp(' + strs.arr + ')',
           ')'
         ]);
       } else {
-        ret.push(loose ? genStackJudge(parts, data) : data + strs.str);
+        ret.push(accessVariable(loose, parts, data + part0, data + strs.str));
       }
       ret.push(')');
       return ret.join('');
@@ -137,7 +144,7 @@ xtemplate404CompilerTools = function (exports) {
   };
   return exports;
 }();
-xtemplate404CompilerParser = function (exports) {
+xtemplate410CompilerParser = function (exports) {
   var parser = function (undefined) {
     var parser = {};
     var GrammarConst = {
@@ -1302,26 +1309,23 @@ xtemplate404CompilerParser = function (exports) {
           'bd'
         ],
         function () {
-          var hash = this.$1, seg = this.$3;
-          hash.value[seg[0]] = seg[1];
+          this.$1.value.push(this.$3);
         }
       ],
       [
         'aq',
         ['bd'],
         function () {
-          var hash = new this.yy.Hash({
-              line: this.lexer.firstLine,
-              col: this.lexer.firstColumn
-            }), $1 = this.$1;
-          hash.value[$1[0]] = $1[1];
-          return hash;
+          return new this.yy.Hash({
+            line: this.lexer.firstLine,
+            col: this.lexer.firstColumn
+          }, [this.$1]);
         }
       ],
       [
         'bd',
         [
-          'ab',
+          'an',
           'aa',
           'ao'
         ],
@@ -1465,7 +1469,7 @@ xtemplate404CompilerParser = function (exports) {
         },
         '32': {
           'am': 18,
-          'an': 19,
+          'an': 63,
           'ao': 64,
           'ap': 65,
           'aq': 66,
@@ -1676,7 +1680,7 @@ xtemplate404CompilerParser = function (exports) {
         },
         '93': {
           'am': 18,
-          'an': 19,
+          'an': 63,
           'ao': 64,
           'aq': 104,
           'ar': 105,
@@ -1691,7 +1695,12 @@ xtemplate404CompilerParser = function (exports) {
           'bd': 68,
           'be': 10
         },
-        '95': { 'bd': 107 }
+        '95': {
+          'am': 18,
+          'an': 106,
+          'bd': 107,
+          'be': 10
+        }
       },
       'action': {
         '0': {
@@ -1924,6 +1933,10 @@ xtemplate404CompilerParser = function (exports) {
             2,
             59
           ],
+          'aa': [
+            2,
+            59
+          ],
           'ah': [
             2,
             59
@@ -2025,6 +2038,10 @@ xtemplate404CompilerParser = function (exports) {
             55
           ],
           'g': [
+            2,
+            55
+          ],
+          'aa': [
             2,
             55
           ],
@@ -2439,6 +2456,10 @@ xtemplate404CompilerParser = function (exports) {
             56
           ],
           'g': [
+            2,
+            56
+          ],
+          'aa': [
             2,
             56
           ],
@@ -3072,7 +3093,7 @@ xtemplate404CompilerParser = function (exports) {
           'ab': [
             1,
             undefined,
-            63
+            7
           ],
           'ad': [
             1,
@@ -3946,6 +3967,10 @@ xtemplate404CompilerParser = function (exports) {
             2,
             11
           ],
+          'aa': [
+            2,
+            11
+          ],
           'ah': [
             2,
             11
@@ -3954,75 +3979,68 @@ xtemplate404CompilerParser = function (exports) {
         '63': {
           'g': [
             2,
-            59
-          ],
-          'i': [
-            2,
-            59
+            50
           ],
           'j': [
             2,
-            59
+            50
           ],
           'k': [
             2,
-            59
+            50
           ],
           'l': [
             2,
-            59
+            50
           ],
           'm': [
             2,
-            59
+            50
           ],
           'n': [
             2,
-            59
+            50
           ],
           'o': [
             2,
-            59
+            50
           ],
           'p': [
             2,
-            59
+            50
           ],
           'q': [
             2,
-            59
+            50
           ],
           'r': [
             2,
-            59
+            50
           ],
           's': [
             2,
-            59
+            50
           ],
           't': [
             2,
-            59
+            50
           ],
           'u': [
             2,
-            59
+            50
           ],
           'v': [
             2,
-            59
+            50
           ],
           'w': [
             2,
-            59
+            50
           ],
-          'ac': [
-            2,
-            59
-          ],
-          'ad': [
-            2,
-            59
+          'i': [
+            1,
+            undefined,
+            32
           ],
           'aa': [
             1,
@@ -4162,6 +4180,10 @@ xtemplate404CompilerParser = function (exports) {
             57
           ],
           'g': [
+            2,
+            57
+          ],
+          'aa': [
             2,
             57
           ],
@@ -5330,7 +5352,7 @@ xtemplate404CompilerParser = function (exports) {
           'ab': [
             1,
             undefined,
-            63
+            7
           ],
           'ad': [
             1,
@@ -5424,6 +5446,10 @@ xtemplate404CompilerParser = function (exports) {
             2,
             9
           ],
+          'aa': [
+            2,
+            9
+          ],
           'ah': [
             2,
             9
@@ -5433,7 +5459,7 @@ xtemplate404CompilerParser = function (exports) {
           'ab': [
             1,
             undefined,
-            106
+            7
           ]
         },
         '96': {
@@ -5514,6 +5540,10 @@ xtemplate404CompilerParser = function (exports) {
             10
           ],
           'g': [
+            2,
+            10
+          ],
+          'aa': [
             2,
             10
           ],
@@ -5600,6 +5630,10 @@ xtemplate404CompilerParser = function (exports) {
             58
           ],
           'g': [
+            2,
+            58
+          ],
+          'aa': [
             2,
             58
           ],
@@ -5693,6 +5727,11 @@ xtemplate404CompilerParser = function (exports) {
           ]
         },
         '106': {
+          'i': [
+            1,
+            undefined,
+            32
+          ],
           'aa': [
             1,
             undefined,
@@ -5816,6 +5855,10 @@ xtemplate404CompilerParser = function (exports) {
             2,
             8
           ],
+          'aa': [
+            2,
+            8
+          ],
           'ah': [
             2,
             8
@@ -5910,7 +5953,7 @@ xtemplate404CompilerParser = function (exports) {
   }
   return exports;
 }();
-xtemplate404CompilerAst = function (exports) {
+xtemplate410CompilerAst = function (exports) {
   var ast = {};
   function sameArray(a1, a2) {
     var l1 = a1.length, l2 = a2.length;
@@ -6023,9 +6066,8 @@ xtemplate404CompilerAst = function (exports) {
     self.value = value;
   };
   ast.Number.prototype.type = 'number';
-  ast.Hash = function (pos) {
+  ast.Hash = function (pos, value) {
     var self = this;
-    var value = {};
     self.pos = pos;
     self.value = value;
   };
@@ -6059,9 +6101,9 @@ xtemplate404CompilerAst = function (exports) {
   exports = ast;
   return exports;
 }();
-xtemplate404Compiler = function (exports) {
-  var util = xtemplate404Runtime.util;
-  var compilerTools = xtemplate404CompilerTools;
+xtemplate410Compiler = function (exports) {
+  var util = xtemplate410Runtime.util;
+  var compilerTools = xtemplate410CompilerTools;
   var pushToArray = compilerTools.pushToArray;
   var wrapByDoubleQuote = compilerTools.wrapByDoubleQuote;
   var TMP_DECLARATION = ['var t;'];
@@ -6104,9 +6146,9 @@ xtemplate404Compiler = function (exports) {
   var BUFFER_APPEND = 'buffer.data += {value};';
   var BUFFER_WRITE_ESCAPED = 'buffer = buffer.writeEscaped({value});';
   var RETURN_BUFFER = 'return buffer;';
-  var XTemplateRuntime = xtemplate404Runtime;
-  var parser = xtemplate404CompilerParser;
-  parser.yy = xtemplate404CompilerAst;
+  var XTemplateRuntime = xtemplate410Runtime;
+  var parser = xtemplate410CompilerParser;
+  parser.yy = xtemplate410CompilerAst;
   var nativeCode = [];
   var substitute = util.substitute;
   var each = util.each;
@@ -6221,6 +6263,7 @@ xtemplate404Compiler = function (exports) {
     var params = func.params;
     var hash = func.hash;
     var funcParams = [];
+    var isSetFunction = func.id.string === 'set';
     if (params) {
       each(params, function (param) {
         var nextIdNameCode = self[param.type](param);
@@ -6230,13 +6273,27 @@ xtemplate404Compiler = function (exports) {
     }
     var funcHash = [];
     if (hash) {
-      each(hash.value, function (v, key) {
-        var nextIdNameCode = self[v.type](v);
-        pushToArray(source, nextIdNameCode.source);
-        funcHash.push([
-          wrapByDoubleQuote(key),
-          nextIdNameCode.exp
-        ]);
+      each(hash.value, function (h) {
+        var v = h[1];
+        var key = h[0];
+        var vCode = self[v.type](v);
+        pushToArray(source, vCode.source);
+        if (isSetFunction) {
+          var resolvedParts = compilerTools.convertIdPartsToRawAccessor(self, source, key.parts).resolvedParts;
+          funcHash.push({
+            key: resolvedParts,
+            depth: key.depth,
+            value: vCode.exp
+          });
+        } else {
+          if (key.parts.length !== 1 || typeof key.parts[0] !== 'string') {
+            throw new Error('invalid hash parameter');
+          }
+          funcHash.push([
+            wrapByDoubleQuote(key.string),
+            vCode.exp
+          ]);
+        }
       });
     }
     var exp = '';
@@ -6248,11 +6305,18 @@ xtemplate404Compiler = function (exports) {
         exp += ',params:[' + funcParams.join(',') + ']';
       }
       if (funcHash.length) {
-        var hashStr = '';
-        util.each(funcHash, function (h) {
-          hashStr += ',' + h[0] + ':' + h[1];
-        });
-        exp += ',hash:{' + hashStr.slice(1) + '}';
+        var hashStr = [];
+        if (isSetFunction) {
+          util.each(funcHash, function (h) {
+            hashStr.push('{key:[' + h.key.join(',') + '],value:' + h.value + ', depth:' + h.depth + '}');
+          });
+          exp += ',hash: [' + hashStr.join(',') + ']';
+        } else {
+          util.each(funcHash, function (h) {
+            hashStr.push(h[0] + ':' + h[1]);
+          });
+          exp += ',hash: {' + hashStr.join(',') + '}';
+        }
       }
       if (fn) {
         exp += ',fn: ' + fn;
@@ -6526,9 +6590,18 @@ xtemplate404Compiler = function (exports) {
             for (var i = 1; i < resolvedParts.length; i++) {
               resolvedParts[i] = '[' + resolvedParts[i] + ']';
             }
+            var value;
+            if (loose) {
+              value = compilerTools.genStackJudge(resolvedParts.slice(1), resolvedParts[0]);
+            } else {
+              value = resolvedParts[0];
+              for (var ri = 1; ri < resolvedParts.length; ri++) {
+                value += resolvedParts[ri];
+              }
+            }
             source.push(substitute(ASSIGN_STATEMENT, {
               lhs: idName,
-              value: compilerTools.genStackJudge(resolvedParts.slice(1), resolvedParts[0])
+              value: value
             }));
           } else {
             source.push(substitute(ASSIGN_STATEMENT, {
@@ -6622,10 +6695,10 @@ xtemplate404Compiler = function (exports) {
   exports = compiler;
   return exports;
 }();
-xtemplate404Index = function (exports) {
-  var XTemplateRuntime = xtemplate404Runtime;
+xtemplate410Index = function (exports) {
+  var XTemplateRuntime = xtemplate410Runtime;
   var util = XTemplateRuntime.util;
-  var Compiler = xtemplate404Compiler;
+  var Compiler = xtemplate410Compiler;
   var compile = Compiler.compile;
   function XTemplate(tpl, config) {
     var tplType = typeof tpl;
@@ -6677,5 +6750,5 @@ xtemplate404Index = function (exports) {
   });
   return exports;
 }();
-module.exports = xtemplate404Index;
+module.exports = xtemplate410Index;
 });
