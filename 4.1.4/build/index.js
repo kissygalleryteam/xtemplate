@@ -1,20 +1,30 @@
 /*
-Copyright 2015, xtemplate@4.1.3
+Copyright 2015, xtemplate@4.1.4
 MIT Licensed
-build time: Mon, 02 Feb 2015 12:36:56 GMT
+build time: Wed, 04 Feb 2015 08:24:46 GMT
 */
-define("kg/xtemplate/4.1.3/index", ["kg/xtemplate/4.1.3/runtime"], function(require, exports, module) {
-var xtemplate413Runtime = require("kg/xtemplate/4.1.3/runtime");
+;(function() {
+if(window.KISSY){
+ KISSY.add("kg/xtemplate/4.1.4/index", ["kg/xtemplate/4.1.4/runtime"],function(S, require, exports, module){
+ _xt(require, exports, module);
+});
+ } else if (window.define){
+ define("kg/xtemplate/4.1.4/index", ["kg/xtemplate/4.1.4/runtime"], _xt);
+}else{
+throw new Error("Can't found any module manager, such like Kissy CMD AMD SeaJS and etc.");
+};
+function _xt(require, exports, module) {
+var xtemplate414Runtime = require("kg/xtemplate/4.1.4/runtime");
 /*
 combined modules:
-xtemplate/4.1.3/index
-xtemplate/4.1.3/compiler
-xtemplate/4.1.3/compiler/tools
-xtemplate/4.1.3/compiler/parser
-xtemplate/4.1.3/compiler/ast
+xtemplate/4.1.4/index
+xtemplate/4.1.4/compiler
+xtemplate/4.1.4/compiler/tools
+xtemplate/4.1.4/compiler/parser
+xtemplate/4.1.4/compiler/ast
 */
-var xtemplate413CompilerTools, xtemplate413CompilerParser, xtemplate413CompilerAst, xtemplate413Compiler, xtemplate413Index;
-xtemplate413CompilerTools = function (exports) {
+var xtemplate414CompilerTools, xtemplate414CompilerParser, xtemplate414CompilerAst, xtemplate414Compiler, xtemplate414Index;
+xtemplate414CompilerTools = function (exports) {
   /**
    * compiler tools
    */
@@ -144,7 +154,7 @@ xtemplate413CompilerTools = function (exports) {
   };
   return exports;
 }();
-xtemplate413CompilerParser = function (exports) {
+xtemplate414CompilerParser = function (exports) {
   var parser = function (undefined) {
     var parser = {};
     var GrammarConst = {
@@ -5953,7 +5963,7 @@ xtemplate413CompilerParser = function (exports) {
   }
   return exports;
 }();
-xtemplate413CompilerAst = function (exports) {
+xtemplate414CompilerAst = function (exports) {
   var ast = {};
   function sameArray(a1, a2) {
     var l1 = a1.length, l2 = a2.length;
@@ -6101,9 +6111,9 @@ xtemplate413CompilerAst = function (exports) {
   exports = ast;
   return exports;
 }();
-xtemplate413Compiler = function (exports) {
-  var util = xtemplate413Runtime.util;
-  var compilerTools = xtemplate413CompilerTools;
+xtemplate414Compiler = function (exports) {
+  var util = xtemplate414Runtime.util;
+  var compilerTools = xtemplate414CompilerTools;
   var pushToArray = compilerTools.pushToArray;
   var wrapByDoubleQuote = compilerTools.wrapByDoubleQuote;
   var TMP_DECLARATION = ['var t;'];
@@ -6146,9 +6156,9 @@ xtemplate413Compiler = function (exports) {
   var BUFFER_APPEND = 'buffer.data += {value};';
   var BUFFER_WRITE_ESCAPED = 'buffer = buffer.writeEscaped({value});';
   var RETURN_BUFFER = 'return buffer;';
-  var XTemplateRuntime = xtemplate413Runtime;
-  var parser = xtemplate413CompilerParser;
-  parser.yy = xtemplate413CompilerAst;
+  var XTemplateRuntime = xtemplate414Runtime;
+  var parser = xtemplate414CompilerParser;
+  parser.yy = xtemplate414CompilerAst;
   var nativeCode = [];
   var substitute = util.substitute;
   var each = util.each;
@@ -6695,10 +6705,10 @@ xtemplate413Compiler = function (exports) {
   exports = compiler;
   return exports;
 }();
-xtemplate413Index = function (exports) {
-  var XTemplateRuntime = xtemplate413Runtime;
+xtemplate414Index = function (exports) {
+  var XTemplateRuntime = xtemplate414Runtime;
   var util = XTemplateRuntime.util;
-  var Compiler = xtemplate413Compiler;
+  var Compiler = xtemplate414Compiler;
   var compile = Compiler.compile;
   function XTemplate(tpl, config) {
     var tplType = typeof tpl;
@@ -6750,5 +6760,6 @@ xtemplate413Index = function (exports) {
   });
   return exports;
 }();
-module.exports = xtemplate413Index;
-});
+module.exports = xtemplate414Index;
+};
+})();
