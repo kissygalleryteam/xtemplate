@@ -1,20 +1,20 @@
 /*
-Copyright 2014, xtemplate@4.0.3
+Copyright 2015, xtemplate@4.1.0
 MIT Licensed
-build time: Mon, 29 Dec 2014 08:04:25 GMT
+build time: Wed, 28 Jan 2015 10:21:30 GMT
 */
-define("kg/xtemplate/4.0.3/runtime",[],function(require,exports,module) {
+define("kg/xtemplate/4.1.0/runtime", [], function(require, exports, module) {
 
 /*
 combined modules:
-xtemplate/runtime
-xtemplate/runtime/util
-xtemplate/runtime/commands
-xtemplate/runtime/scope
-xtemplate/runtime/linked-buffer
+xtemplate/4.1.0/runtime
+xtemplate/4.1.0/runtime/util
+xtemplate/4.1.0/runtime/commands
+xtemplate/4.1.0/runtime/scope
+xtemplate/4.1.0/runtime/linked-buffer
 */
-var xtemplateRuntimeUtil, xtemplateRuntimeScope, xtemplateRuntimeLinkedBuffer, xtemplateRuntimeCommands, xtemplateRuntime;
-xtemplateRuntimeUtil = function (exports) {
+var xtemplate410RuntimeUtil, xtemplate410RuntimeScope, xtemplate410RuntimeLinkedBuffer, xtemplate410RuntimeCommands, xtemplate410Runtime;
+xtemplate410RuntimeUtil = function (exports) {
   // http://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
   // http://wonko.com/post/html-escaping
   var htmlEntities = {
@@ -131,7 +131,7 @@ xtemplateRuntimeUtil = function (exports) {
   };
   return exports;
 }();
-xtemplateRuntimeScope = function (exports) {
+xtemplate410RuntimeScope = function (exports) {
   function Scope(data, affix, parent) {
     if (data !== undefined) {
       this.data = data;
@@ -282,8 +282,8 @@ xtemplateRuntimeScope = function (exports) {
   exports = Scope;
   return exports;
 }();
-xtemplateRuntimeLinkedBuffer = function (exports) {
-  var util = xtemplateRuntimeUtil;
+xtemplate410RuntimeLinkedBuffer = function (exports) {
+  var util = xtemplate410RuntimeUtil;
   function Buffer(list, next, tpl) {
     this.list = list;
     this.init();
@@ -407,9 +407,9 @@ xtemplateRuntimeLinkedBuffer = function (exports) {
   exports = LinkedBuffer;
   return exports;
 }();
-xtemplateRuntimeCommands = function (exports) {
-  var Scope = xtemplateRuntimeScope;
-  var util = xtemplateRuntimeUtil;
+xtemplate410RuntimeCommands = function (exports) {
+  var Scope = xtemplate410RuntimeScope;
+  var util = xtemplate410RuntimeUtil;
   var commands = {
     range: function (scope, option) {
       var params = option.params;
@@ -525,7 +525,27 @@ xtemplateRuntimeCommands = function (exports) {
       return buffer;
     },
     set: function (scope, option, buffer) {
-      scope.mix(option.hash);
+      var hash = option.hash;
+      var len = hash.length;
+      for (var i = 0; i < len; i++) {
+        var h = hash[i];
+        var parts = h.key;
+        var depth = h.depth;
+        var value = h.value;
+        if (parts.length === 1) {
+          var root = scope.root;
+          while (depth && root !== scope) {
+            scope = scope.parent;
+            --depth;
+          }
+          scope.set(parts[0], value);
+        } else {
+          var last = scope.resolve(parts.slice(0, -1), depth);
+          if (last) {
+            last[parts[parts.length - 1]] = value;
+          }
+        }
+      }
       return buffer;
     },
     include: 1,
@@ -622,12 +642,12 @@ xtemplateRuntimeCommands = function (exports) {
   exports = commands;
   return exports;
 }();
-xtemplateRuntime = function (exports) {
-  var util = xtemplateRuntimeUtil;
-  var nativeCommands = xtemplateRuntimeCommands;
+xtemplate410Runtime = function (exports) {
+  var util = xtemplate410RuntimeUtil;
+  var nativeCommands = xtemplate410RuntimeCommands;
   var commands = {};
-  var Scope = xtemplateRuntimeScope;
-  var LinkedBuffer = xtemplateRuntimeLinkedBuffer;
+  var Scope = xtemplate410RuntimeScope;
+  var LinkedBuffer = xtemplate410RuntimeLinkedBuffer;
   function TplWrap(name, runtime, root, scope, buffer, originalName, fn, parent) {
     this.name = name;
     this.originalName = originalName || name;
@@ -727,7 +747,6 @@ xtemplateRuntime = function (exports) {
         return globalConfig;
       }
     },
-    version: '4.0.3',
     nativeCommands: nativeCommands,
     utils: utils,
     util: util,
@@ -909,5 +928,5 @@ xtemplateRuntime = function (exports) {
   exports = XTemplateRuntime;
   return exports;
 }();
-module.exports = xtemplateRuntime;
+module.exports = xtemplate410Runtime;
 });
