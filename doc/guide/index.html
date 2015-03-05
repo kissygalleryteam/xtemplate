@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>xtemplate</title>
+    <link rel="stylesheet" href="http://cdn.staticfile.org/twitter-bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://docs.kissyui.com/1.4/source/guideline/templates/assets/com-prettify.css">
+    <link rel="stylesheet" href="http://docs.kissyui.com/1.4/source/guideline/templates/assets/com.css">
+    <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js"></script>
+    <script src="http://cdn.staticfile.org/twitter-bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="http://cdn.staticfile.org/prettify/r298/prettify.min.js"></script>
+    <script src="http://g.tbcdn.cn/kissy/k/1.4.8/seed-min.js" data-config="{combine:true}"></script>
+  </head>
+  <body data-spy="scroll" data-target=".bs-docs-sidebar">
+    <div id="header"><a href="http://docs.kissyui.com/" class="logo">kissy</a>
+      <nav><a href="http://docs.kissyui.com/1.4/docs/html/coms.html">优秀组件推荐</a></nav>
+    </div>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3 bs-docs-sidebar">
+          <ul data-spy="affix" data-offset-top="0" class="nav nav-list bs-docs-sidenav"></ul>
+        </div>
+        <div class="span9 bs-docs-content">
+          <h1 data-id="undefined" class="title">xtemplate</h1>
+          <p class="author-wrapper"><span>组件有问题？旺旺联系作者：</span><a href="https://github.com/yiminghe" target="_blank" data-name="承玉" class="author"><img src="https://avatars.githubusercontent.com/u/200876?v=3&amp;s=60" alt="承玉"></a><span class="author-name">承玉</span>
+          </p>
+          <div class="common-link"><a href="../demo/index.html" target="_blank" class="demo">示例</a><a href="https://github.com/kissygalleryteam/xtemplate" target="_blank" class="source">源码</a></div>
+          <p class="com-info"><span class="info-label">View</span><span data-com="xtemplate" class="J_View">1161</span></p>
+          <p class="com-info"><span class="info-label">所属分类</span><a href="http://kpm.taobao.net/list/框架&amp;工具">框架&amp;工具</a>
+          </p>
+          <p class="com-info"><span class="info-label">kissy版本</span><span>1.4.X</span>
+          </p><p>0.x 是 KISSY 1.4.x 的 xtemplate</p>
+<h1 id="-">简介</h1>
+<p>kg/xtemplate 是 Kissy 团队为了适应淘宝业务而开发的一款前端模板语言，已经在淘宝系业务中大量应用。作为一款语法成熟，高效的模板语言，其不止在浏览器中得到了广泛的应用，同时在淘宝系也广泛应用于 NodeJS 项目中，进而实现了良好的前后端 View 层的模板共享。</p>
+<p>本文档单面向 kpm 中的 Kissy 进行介绍，期望刚接触此模板语言的同学也可以快速上手。</p>
+<h1 id="first-things-first">First things first</h1>
+<p>本章意在让一个没有接触过这门模板语言的人也可以快速的学习使用。</p>
+<h2 id="-kpm-kg-xtemplate">使用 KPM 中的  kg/xtemplate</h2>
+<p>现在让我们来看看怎么开始使用 KPM 中的 kg/xtemplate。</p>
+<p>XTemplate 在 <code>kg(Kissy Gallery)</code> 中被称为 <code>kg/xtemplate</code> （全小写）。如果我们要使用 4.1.4 版本，就应该使用 &quot;kg/xtemplate/4.1.4/&quot; 这个包名来获得。</p>
+<p>例子：</p>
+<iframe style="width:100%; height:300px" src="http://jsbin.com/qejiga/3/watch?html,js,output" ></iframe>
+
+<h2 id="-">前提知识：编译和运行</h2>
+<p>此模板语言使用时分为编译和运行两个阶段。编译即是将模板语言编译成 JavaScript 目标代码，执行即是执行 JavaScript 目标代码。</p>
+<p>所以使用时可以分为两种组合搭配：</p>
+<ol>
+<li>浏览器编译 + 浏览器执行</li>
+<li>项目构建时编译 + 浏览器执行</li>
+</ol>
+<p>其中第 2 种我们使用术语 <code>预编译</code> 来代称。</p>
+<h2 id="-">浏览器编译 + 浏览器执行</h2>
+<p>这是一种最简便的使用办法，将 kg/xtemplate 编译为 JavaScript 的过程将在浏览器中执行，在项目发布前不需要做任何的构建编译工作。不过代价是<code>耗时的编译过程</code>将在浏览器中进行。如果只是一点点的片段，也未尝不可。</p>
+<p>例子：</p>
+<iframe style="width:100%; height:300px" src="http://jsbin.com/qazeku/2/watch?html,js,output" ></iframe>
+
+
+<h2 id="-">项目构建时编译 + 浏览器执行 （预编译）</h2>
+<p>编译过程放在项目发布前的<code>项目构建时</code>来进行无疑是最好的。因为<code>耗时的解析编译</code>的过程在发布前的项目构建时就进行了，在浏览器中执行的直接就是 JavaScript 目标的代码。</p>
+<h3 id="-">免去加载代码编译部分的代码</h3>
+<p>因为代码已经提前从 kg/xtemplate 翻译到了 JavaScript 这样就不用再加载代码编译部分的代码了。现在只需要引入 <code>kg/xtemplate/runtime</code> 即可，这里面包含了 kg/xtemplate 运行时的一些必要依赖。</p>
+<p>例子：</p>
+<iframe style="width:100%; height:300px" src="http://jsbin.com/wicaqi/3/watch?html,js,output" ></iframe>
+
+
+<p>其中的 <code>tplFunction</code> 可以由项目构建工具自动编译完成然后通过 <code>require()</code> 加载进来。这里直接将编译后的结果放在了 Demo 里面。 </p>
+<h3 id="-">预编译</h3>
+<p>淘宝系内部使用的项目构建套件（工具）已经很好的支持了自动构建时预编译、以及开发时的自动 <code>watch</code> ，推荐直接使用。 比如：XCake。厂外同学（或者没有使用现有打包套件的同学）可以使用 <a href="https://www.npmjs.com/packages/kissy-xtemplate">kissy-xtemplate</a> 这个 Node 模块，或者 <a href="https://www.npmjs.com/package/grunt-kissy-template">grunt-kissy-xtemplate</a> 这个 Grunt 插件来编译。这两个模块的文档已经很清晰了，这里就不再赘述了。</p>
+<p>参考：</p>
+<ul>
+<li><a href="https://www.npmjs.com/packages/kissy-xtemplate">kissy-xtemplate</a></li>
+<li><a href="https://www.npmjs.com/package/grunt-kissy-template">grunt-kissy-xtemplate</a></li>
+</ul>
+<h2 id="-">语言的基本形式</h2>
+<p>这是一个帮助你快速理解语法定义的小篇幅，详细的语法参考参见后面的章节。</p>
+<h3 id="-">语句的标记方法</h3>
+<h4 id="-">标记方法</h4>
+<p>标记方式与 PHP、ASP 这类语言有一定类似性。kg/xtemplate 中的语句都是用 {{}} 括起来的。如 </p>
+<pre><code>{{$a}}
+</code></pre><p>就是引用一个量 <code>$a</code> 的值，并直接输出。</p>
+<p>注意，双花括号的语法对输出值默认进行了 HTML 转义，如果需要输出未经转义的值，需要使用 <code>{{{$a}}}</code>，三个花括号的标记方法。</p>
+<h4 id="-">非标记内的内容</h4>
+<p>如：</p>
+<pre><code>{{$a}}bc
+</code></pre><p>中的 <code>bc</code> 部分会原封不动的输出。</p>
+<h4 id="-">块语法形式</h4>
+<p>块语法是一种类似 HTML 标签的语法形式，由一对标记组成，其形式如下：</p>
+<pre><code>{{#each($list)}}
+    {{$aAtList}}
+{{/each}}
+</code></pre><p>开始标记使用 <code>{{#...}}</code> 定义，结束标记使用 <code>{{/...}}</code> 定义。
+块形式语法主要使用在流程控制上，如 循环、条件判断语句 等。 
+注意，块内部的上下文环境、特殊语法标记，不同的块形式的语句可能有所不同。
+在某些冲突情形下（如在VM语法环境中，#符号可能会有冲突），可以用 @ 符号代替，即 <code>{{@each($list)}}</code>。</p>
+<h4 id="-">逃逸标记</h4>
+<p>如：</p>
+<pre><code>{{% {{$a}} %}}
+</code></pre><p>其中的 <code>{{$a}}</code> 会直接输出，并不会当成 kg/xtemplate 语言。</p>
+<h4 id="-">注释标记</h4>
+<pre><code>{{! Comments }}
+</code></pre><p>这个标记用来书写注释，并不会输出任何内容。</p>
+<h2 id="-">术语定义</h2>
+<ul>
+<li>编译：将 kg/xtemplate 语言编译成 JavaScript 目标代码的过程。</li>
+<li>执行：执行 JavaScript 目标代码的过程。</li>
+<li>预编译：把编译过程放在项目构建过程中的行为。</li>
+<li>构建工具：<ul>
+<li>已经将大部分构建项目构建问题都进行了覆盖的项目构建工具，如 XCake 。</li>
+<li>类似 Grunt、Gulp 的构建工具（以及其生态圈）。</li>
+</ul>
+</li>
+</ul>
+<h1 id="xtemplate-">XTemplate 模板语法</h1>
+<hr>
+<p>本文档是 XTemplate 支持的语法功能的一个整体简介。</p>
+<h2 id="-">变量</h2>
+<p>变量会从当前模板的上下文上查找值，如果你想输出一个变量的值，可以使用：</p>
+<pre><code>{{ username }}
+</code></pre><p>这样模板引擎将会从上下文上去查找变量 <code>name</code> 然后打印出来。变量可以使用 <code>.</code> 来访问属性，和 javascript 一样，也可以用 <code>[]</code>。</p>
+<pre><code>{{ user.name }}
+{{ user[&quot;name&quot;] }}
+</code></pre><p>和 javascript 一样，这两种方式的结果都是一样的。</p>
+<p>如果一个变量的值是 <code>undefined</code> 或者 <code>null</code>，什么也不会被输出。同样的，如果引用了 <code>undefined</code> 或者 <code>null</code> 的属性，也不会输出任何值（也不会报错）。下面的这些操作当 <code>foo === undefined</code> 的时候，都不会输出任何值：<code>{{ foo }}</code>, <code>{{ foo.bar }}</code>, <code>{{ foo.bar.baz }}</code>。</p>
+<h3 id="-">支持的数据类型</h3>
+<p>XTemplate 支持 javascript 中所有的基本数据类型。</p>
+<ul>
+<li><code>Boolean</code></li>
+<li><code>Number</code></li>
+<li><code>String</code></li>
+<li><code>null</code></li>
+<li><code>undefined</code></li>
+<li><code>Object</code></li>
+<li><code>Array</code></li>
+</ul>
+<h3 id="-">输出</h3>
+<p>使用 <code>{{ foo }}</code> 来输出 <code>escape</code> 之后的数据, <code>{{{ foo }}}</code> 来输出 <code>unescape</code> 的原始数据。</p>
+<pre><code class="lang-html">escaped: {{ foo }}
+unescaped: {{{ foo }}}
+</code></pre>
+<p>使用数据 <code>{ foo: &quot;&lt;script&gt;&quot; }</code> 渲染这个模板，将会得到下面的结果：</p>
+<pre><code class="lang-html">escaped: &amp;lt;script&amp;gt;
+unescaped: &lt;script&gt;
+</code></pre>
+<p>如果你希望输出最原始的数据（包括 <code>{{}}</code>），你需要使用 <code>{{% %}}</code> 语法：</p>
+<pre><code>{{%
+
+{{x}}
+
+%}}
+</code></pre><p>渲染这个模板，将会得到下面的结果：</p>
+<pre><code>{{x}}
+</code></pre><p>如果想要给模板增加一些注释，请使用 <code>{{! comment }}</code>：</p>
+<pre><code>output before comment
+{{! This is comment }}
+output after comment
+</code></pre><p>渲染这个模板，将会得到下面的结果：</p>
+<pre><code>output before comment
+
+output after comment
+</code></pre><h3 id="-">作用域</h3>
+<p>每一个模板都有一个独立的作用域，在子模板中可以访问到父模板的上下文，但是在子模板中定义或者修改变量不会影响到父模板的变量。就像 javascript 中一样。</p>
+<p>parent.xtpl:</p>
+<pre><code>{{ set (a = 1, b = 2) }}
+{{include (&quot;sub.xtpl&quot;) }}
+in parent:
+a = {{ a }}
+b = {{ b }}
+</code></pre><p>sub.xtpl:</p>
+<pre><code>in sub:
+{{ set b = 3 }}
+a = {{ a }}
+b = {{ b }}
+</code></pre><p>渲染 <code>parent.xtpl</code>，将会得到下面的结果：</p>
+<pre><code>in sub:
+a: 1
+b: 3
+in parent:
+a: 1
+b: 2
+</code></pre><h3 id="-">根数据</h3>
+<p>通过 <code>root.foo</code> 可以放问到渲染的根数据（调用 <code>render</code> 方法时传递进去的数据）。</p>
+<p>用数据 <code>{name: &quot;foo&quot;, array: [name: &quot;bar&quot;]}</code> 渲染下面的模板:</p>
+<pre><code>{{#each(arr)}}
+{{root.name}} {{name}}
+{{/each}}
+</code></pre><p>将会得到结果：</p>
+<pre><code>foo bar
+</code></pre><h2 id="-">方法和逻辑</h2>
+<p>你可以使用变量上 javascript 提供的方法：</p>
+<pre><code class="lang-javascript">var x = [1, 2, 3];
+</code></pre>
+<pre><code>{{#each(x.slice(1))}}{{this}} {{/each}} // =&gt; 2 3
+</code></pre><h3 id="-">操作符</h3>
+<p>XTemplate 支持在数据上使用一些操作符：</p>
+<ul>
+<li>加: <code>+</code></li>
+<li>减: <code>-</code></li>
+<li>乘: <code>*</code></li>
+<li>除: <code>/</code></li>
+<li>余: <code>%</code></li>
+</ul>
+<p>例子:</p>
+<pre><code>{{x+y}}
+{{x + &quot;1&quot;}}
+{{ y - 1 }}
+</code></pre><h3 id="-">比较</h3>
+<ul>
+<li><code>===</code></li>
+<li><code>!==</code></li>
+<li><code>&gt;</code></li>
+<li><code>&gt;=</code></li>
+<li><code>&lt;</code></li>
+<li><code>&lt;=</code></li>
+</ul>
+<p>例子:</p>
+<pre><code>{{#if( x===1 )}}
+1
+{{elseif (x===2)}}
+2
+{{else}}
+3
+{{/if}}
+
+{{#if ( (x+1) &gt; 2 )}}
+{{/if}}
+</code></pre><h3 id="-">逻辑操作</h3>
+<ul>
+<li><code>||</code></li>
+<li><code>&amp;&amp;</code></li>
+<li><code>!</code></li>
+</ul>
+<p>例子:</p>
+<pre><code>{{#if(x&gt;1 &amp;&amp; y&lt;2)}}
+{{/if}}
+
+{{#if(!x)}}
+{{/if}}
+</code></pre><h3 id="-">函数调用</h3>
+<p>如果你传递了 javascript 的方法到模板中，你可以像在 javascript 中一样使用它.</p>
+<p>{{ foo(1, 2, 3) }}</p>
+<h3 id="-">内置函数</h3>
+<h4 id="range-start-end-step-">range(start, end, [step])</h4>
+<p>如果需要迭代一些固定的数字，<code>range</code> 可以很方便的生成一个数字集合给你。这些数字从 <code>start</code> 开始，然后按照 <code>step</code> (默认为1) 的数量进行递增或者递减，直到数字到达了 <code>stop</code>（不会包括 <code>stop</code>）。</p>
+<pre><code>{{#each(range(0,3))}}{{this}}{{/each}}
+{{#each(range(3,0))}}{{this}}{{/each}}
+{{#each(range(3,0,2))}}{{this}}{{/each}}
+</code></pre><p>渲染这个模板，将会得到结果：</p>
+<pre><code>012
+321
+31
+</code></pre><h4 id="set-key-value-key-value-">set(key=value, [key=value])</h4>
+<p><code>set</code> 让你定义或者修改一个变量。</p>
+<pre><code>{{set(x=1)}}
+{{set(y=3,z=2)}}
+{{x}}
+{{y+z}}
+</code></pre><p>渲染这个模板，将会得到结果：</p>
+<pre><code>1
+5
+</code></pre><h2 id="-">命令</h2>
+<p>命令是一些特殊的区块，对于这些特殊的区块，XTemplate 会做特殊的处理。XTemplate 自带了一些内置的命令，你也可以自己定义一些自己的命令。</p>
+<h3 id="if">if</h3>
+<p><code>if</code> 检查一个条件，让你可以选择性的输出内容，它和 javascript 中的 <code>if</code> 完全一致。</p>
+<pre><code>{{# if (variable) }}
+    It is true
+{{/ if }}
+</code></pre><p>如果 <code>variable</code> 定义了且值为 true, 将会输出 <code>It is true</code>，否则什么都不会输出。</p>
+<p>同样，可以通过 <code>elseif</code> 和 <code>else</code> 增加判断中的其他条件：</p>
+<pre><code>{{# if (hungry) }}
+    I am hungry
+{{ elseif (tired) }}
+    I am tired
+{{ else }}
+    I am good!
+{{/ if }}
+</code></pre><h3 id="with">with</h3>
+<p><code>with</code> 命令和 javascript 中的 <code>with</code> 类似：</p>
+<pre><code class="lang-javascript">var a = {
+    b: 1
+}
+</code></pre>
+<pre><code>{{#with(a)}}
+{{b}} // 1
+{{/with}}
+</code></pre><h3 id="each">each</h3>
+<p><code>each</code> 可以对 arrays 和 dictionaries 进行迭代：</p>
+<h4 id="arrays">arrays</h4>
+<pre><code>{{set (array = [{
+    name: &quot;foo&quot;
+}, {
+    name: &quot;bar&quot;
+}])}}
+
+{{#each(array)}}
+    {{xindex}} {{this.name}}
+{{/each}}
+</code></pre><p>渲染这个模版，将会得到结果：</p>
+<pre><code>0 foo
+1 bar
+</code></pre><h4 id="dictionaries">dictionaries</h4>
+<pre><code>{{set (dictionary = {
+    foo: &quot;bar&quot;,
+    hello: &quot;world&quot;
+})}}
+
+{{#each(dictionary,&quot;value&quot;,&quot;key&quot;)}}
+    {{key}} {{value}}
+{{/each}}
+</code></pre><p>渲染这个模版，将会得到结果：</p>
+<pre><code>foo bar
+hello world
+</code></pre><h4 id="-">访问上层变量</h4>
+<p>在 <code>with</code> 和 <code>each</code> 中，可以通过 <code>../</code> 来访问外层的同名变量.</p>
+<pre><code>{{#with(x)}}
+    {{#each(b)}}
+        {{../a}}{{a}} // 12
+    {{/each}}
+{{/with}}
+</code></pre><p>使用数据 <code>{a: 1, b: [{a: 2}] }</code> 渲染上面的页面，将会得到结果：</p>
+<pre><code>12
+</code></pre><h3 id="-">宏</h3>
+<p>宏允许你定义一个可复用的代码片段，和 javascript 中的函数有点类似，下面是一个例子：</p>
+<pre><code>{{#macro(&quot;test&quot;,&quot;param&quot;, default=1)}}
+    param is {{param}} {{default}}
+{{/macro}}
+</code></pre><p>Now you can call this macro like:</p>
+<pre><code>{{macro(&quot;test&quot;,&quot;2&quot;)}}
+{{macro(&quot;test&quot;, &quot;2&quot;, default=2)}}
+</code></pre><p>渲染结果是：</p>
+<pre><code>param is 2 1
+param is 2 2
+</code></pre><p>注意: 在宏中，你不能访问外层作用域上的任何变量，但是仍然可以通过 <code>root</code> 来访问根数据。</p>
+<h3 id="include">include</h3>
+<p>include 引入其他的模板。它在你想要共享不同的小的区块时非常有用。</p>
+<pre><code>{{ include (&quot;item.html&quot;) }}
+</code></pre><p>如果希望在引入子模版的时候同时在子模版的上下文上设置其他的值，可以通过 <code>include</code> 后面的参数传入。</p>
+<p>在 <code>parent.html</code> 中：</p>
+<pre><code>{{ set (x = &quot;x&quot;, y = &quot;y&quot;) }}
+{{ include (&quot;sub.html&quot;, xx = x, yy = x)}}
+</code></pre><p>在 <code>sub.html</code> 中：</p>
+<pre><code>x: {{x}}
+y: {{y}}
+xx: {{xx}}
+yy: {{yy}}
+</code></pre><p>渲染 <code>parent.html</code> 将会得到结果：</p>
+<pre><code>x: x
+y: y
+xx: x
+yy: x
+</code></pre><h3 id="parse">parse</h3>
+<p>如果希望能够让子模版拥有一个完全独立的上下文，不需要父级作用域，则可以使用 <code>parse</code>。</p>
+<p>在 <code>parent.html</code> 中：</p>
+<pre><code>{{ set (x = &quot;x&quot;, y = &quot;y&quot;) }}
+{{ parse (&quot;sub.html&quot;, xx = x, yy = x)}}
+</code></pre><p>在 <code>sub.html</code> 中：</p>
+<pre><code>x: {{x}}
+y: {{y}}
+xx: {{xx}}
+yy: {{yy}}
+</code></pre><p>渲染 <code>parent.html</code> 将会得到结果：</p>
+<pre><code>x:
+y:
+xx: x
+yy: x
+</code></pre><h2 id="-">模板继承</h2>
+<p>模板继承可以让你更容易的来复用模板。当编写一个 template 的时候，你可以定义 <code>blocks</code>，这样在子模板中可以重写掉这些 block。</p>
+<p>如果有一个模板 <code>parent.xtpl</code>：</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta name=&quot;charset&quot; content=&quot;utf-8&quot; /&gt;
+        &lt;title&gt;{{title}}&lt;/title&gt;
+        {{{block (&quot;head&quot;)}}}
+    &lt;/head&gt;
+    &lt;body&gt;
+        {{{block (&quot;body&quot;)}}}
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>和一个子模板 <code>child.xtpl</code>:</p>
+<pre><code class="lang-html">{{extend (&quot;./parent&quot;)}}
+
+{{#block (&quot;head&quot;)}}
+    &lt;link type=&quot;text/css&quot; href=&quot;test.css&quot; rev=&quot;stylesheet&quot; rel=&quot;stylesheet&quot;/&gt;
+{{/block}}
+
+{{#block (&quot;body&quot;)}}
+    &lt;h2&gt;{{title}}&lt;/h2&gt;
+{{/block}}
+</code></pre>
+<pre><code>
+然后我们使用数据 `{title: &#39;XTemplate&#39;}` 渲染 `child.xtpl`，将会得到下面的结果：
+
+```html
+&lt;!doctype html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta name=&quot;charset&quot; content=&quot;utf-8&quot; /&gt;
+        &lt;title&gt;XTemplate&lt;/title&gt;
+        &lt;link type=&quot;text/css&quot; href=&quot;test.css&quot; rev=&quot;stylesheet&quot; rel=&quot;stylesheet&quot;/&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h2&gt;XTemplate&lt;/h2&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre><h2 id="-">保留关键词</h2>
+<ul>
+<li><code>debugger</code></li>
+<li><code>each</code></li>
+<li><code>extend</code></li>
+<li><code>include</code></li>
+<li><code>macro</code></li>
+<li><code>parse</code></li>
+<li><code>range</code></li>
+<li><code>set</code></li>
+<li><code>with</code></li>
+</ul>
+<h1 id="-">如何扩展模板功能</h1>
+<h2 id="-command">扩展 Command</h2>
+<p>kg/xtemplate 提供了一种扩展模板中 Command 的功能，可以在模板中可以调用 JS 中的某个 Function。一个简单的例子：</p>
+<iframe style="width:100%; height:300px" src="http://jsbin.com/xaqoya/5/watch?html,js,output" ></iframe>
+
+<p>这是一个最基础的定义的例子，其中 自定义 Command 可以在三个级别定义（就像CSS可以在不同级别定义样式一样）。</p>
+<ul>
+<li>全局 Command</li>
+</ul>
+<pre><code>XTemplate.addCommand(&#39;succ&#39;,function(scope, option){
+    var n = option.params[0];
+    return n + 1;
+});
+</code></pre><ul>
+<li>在 new XTemplate 时</li>
+</ul>
+<pre><code>var xtpl = new XTemplate(
+    tplStr, 
+    {
+        commands : function(scope, option){
+            var n = option.params[0];
+            return n + 1;
+        }
+    }
+);
+</code></pre><ul>
+<li>在 render 时</li>
+</ul>
+<pre><code>var xtpl = new XTemplate(tplStr);
+xtpl.render(tplContext, {
+    commands : function(scope, option){
+        var n = option.params[0];
+           return n + 1;
+    }
+});
+</code></pre><p>上面都是进行了一些同步的过程，xtpl 同时可以异步返回。具体请参见 API 文档中的 <code>custom command</code> 章节。</p>
+<h2 id="-macro-">宏(Macro)</h2>
+<p>kg/xtemplate 提供了一种简单的方式来复用一些子过程，我们称之为宏（更像是函数，请与处理文件等内容的宏区分开）。例子如下：</p>
+<pre><code>{{#macro(&quot;test&quot;,&quot;param&quot;, default=1)}}
+    param is {{param}} {{default}}
+{{/macro}}
+
+{{macro(&quot;test&quot;,&quot;2&quot;)}}
+{{macro(&quot;test&quot;, &quot;2&quot;, default=2)}}
+</code></pre><p>注意，宏不是可以访问父作用域，不过可以通过 root.key 来访问根数据。</p>
+<h1 id="xtemplate-api">XTemplate API</h1>
+<hr>
+<h2 id="class">Class</h2>
+<p>XTemplate/XTemplateRuntime</p>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>content</td>
+        <td>String</td>
+        <td>template content string</td>
+    </tr>
+    <tr>
+            <td>config</td>
+            <td>Object</td>
+            <td>
+            <table class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th style="width: 100px;">name</th>
+                        <th style="width: 50px;">type</th>
+                        <th>description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>name</td>
+                        <td>String</td>
+                        <td>name of template for error report</td>
+                    </tr>
+                    <tr>
+                        <td>loader</td>
+                        <td>Object</td>
+                        <td>contains a load function to load included template</td>
+                    </tr>
+                    <tr>
+                        <td>commands</td>
+                        <td>Object</td>
+                        <td>command definition</td>
+                        </tr>
+                    </tbody>
+                </table></td>
+        </tr>
+    </tbody>
+</table>
+
+
+<h2 id="methods">Methods</h2>
+<pre><code class="lang-javascript">String render(data:Object, [option:Object, callback:Function]) // render data
+</code></pre>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+      <tr>
+          <td>data</td>
+          <td>Object</td>
+          <td>data object to be rendered</td>
+      </tr>
+      <tr>
+          <td>option</td>
+          <td>Object</td>
+          <td>support runtime commands. for example: {commands: {}}</td>
+      </tr>
+      <tr>
+          <td>callback</td>
+          <td>Function</td>
+          <td>callback function after render</td>
+      </tr>
+    </tbody>
+</table>
+
+<h2 id="tplwrap">TplWrap</h2>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>scope</td>
+        <td>Scope</td>
+        <td>scope object when loader is invoked</td>
+    </tr>
+    <tr>
+        <td>name</td>
+        <td>String</td>
+        <td>full name of template to be loaded</td>
+    </tr>
+    <tr>
+        <td>originalName</td>
+        <td>String</td>
+        <td>originalName name of template to be loaded. for example: {{ include(&#39;./a&#39;) }}; name is maybe /code/a, originalName is ./a</td>
+    </tr>
+</table>
+
+<h3 id="members">Members</h3>
+<h2 id="buffer">Buffer</h2>
+<h3 id="members">Members</h3>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>data</td>
+        <td>String</td>
+        <td>string to be written into buffer</td>
+    </tr>
+    <tr>
+        <td>tpl</td>
+        <td>Object</td>
+        <td>TplWrap object belonged to this buffer</td>
+    </tr>
+</table>
+
+<h3 id="methods">Methods</h3>
+<pre><code class="lang-javascript">Buffer write(data:String)
+</code></pre>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>data</td>
+        <td>String</td>
+        <td>string to be written into buffer</td>
+    </tr>
+</table>
+
+<pre><code class="lang-javascript">Buffer writeEscaped(data:String)
+</code></pre>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>data</td>
+        <td>String</td>
+        <td>first escape string, then write it into buffer</td>
+    </tr>
+</table>
+
+<pre><code class="lang-javascript">Buffer async(fn:Function) // generate a new buffer as the first parameter of callback
+
+Buffer end() // mark escape of current buffer
+
+Buffer error(reason) // mark error of current render
+</code></pre>
+<h2 id="scope">Scope</h2>
+<h3 id="members">Members</h3>
+<pre><code class="lang-javascript">parent // parent scope
+
+root // topmost scope
+</code></pre>
+<h3 id="methods">Methods</h3>
+<pre><code class="lang-javascript">void setParent(scope: Scope)
+
+void setData(data) // set data of current scope
+
+var getData()
+
+void set(name, value) // set kv value of current scope
+
+void get(name)
+</code></pre>
+<h2 id="custom-command">custom command</h2>
+<h3 id="global-command">global command</h3>
+<p>sync inline command</p>
+<pre><code class="lang-javascript">XTemplate.addCommand(&#39;xInline&#39;,function(scope, option){
+  return option.params[0]+&#39;1&#39;;
+});
+</code></pre>
+<p>use buffer</p>
+<pre><code class="lang-javascript">XTemplate.addCommand(&#39;xInline&#39;,function(scope, option, buffer){
+  return buffer.write(option.params[0] + 1);
+});
+</code></pre>
+<pre><code>{{xInline(1)}} // =&gt; 2
+</code></pre><p>sync block command</p>
+<pre><code class="lang-javascript">XTemplate.addCommand(&#39;xBlock&#39;,function(scope, option, buffer){
+  return option.fn(scope, buffer).write(option.params[0]);
+});
+</code></pre>
+<pre><code>{{#xBlock(1)}}
+2
+{{/xBlock}}
+// =&gt; 21
+</code></pre><p>async inline command</p>
+<pre><code class="lang-javascript">XTemplate.addCommand(&#39;xInline&#39;,function(scope, option,buffer){
+  buffer = buffer.async(function(newBuffer){
+    setTimeout(function(){
+        newBuffer.write(option.params[0] + 1).end();
+    },10);
+  });
+  return buffer;
+});
+</code></pre>
+<pre><code>{{xInline(1)}} // =&gt; 2
+</code></pre><p>async block command</p>
+<pre><code class="lang-javascript">XTemplate.addCommand(&#39;xInline&#39;,function(scope, option,buffer){
+  buffer = buffer.async(function(newBuffer){
+    setTimeout(function(){
+        var newScope = xtpl.XTemplate.Scope({ret:2});
+        newScope.setParent(scope);
+        option.fn(newScope, newBuffer);
+    },10);
+  });
+  buffer.write(option.params[0]);
+  return buffer;
+});
+</code></pre>
+<pre><code>{{#xBlock(1)}}
+{{ret}}
+{{/xBlock}}
+// =&gt; 21
+</code></pre><h2 id="loader">loader</h2>
+<p>a object which contains a load function (called when user invoke native include command) and passed to XTemplate config</p>
+<pre><code class="lang-javascript">void load(tpl:TplWrap, callback:Function)
+</code></pre>
+<p>for example, XTemplate load precompiled template by require from modulex:</p>
+<pre><code class="lang-javascript">var loader = {
+    cache: {},
+    load: function (tpl, callback) {
+        var name = tpl.name;
+        var cache = this.cache;
+        if (cache[name]) {
+            return callback(undefined, cache[name]);
+        }
+        require([name], {
+            success: function (tpl) {
+                cache[name] = tpl;
+                callback(undefined, tpl);
+            },
+            error: function () {
+                var error = &#39;template &quot;&#39; + params.name + &#39;&quot; does not exist&#39;;
+                util.log(error, &#39;error&#39;);
+                callback(error);
+            }
+        });
+    }
+};
+</code></pre>
+<h2 id="compiler">compiler</h2>
+<p>XTemplate.Compiler</p>
+<h3 id="methods">Methods</h3>
+<h4 id="compile">compile</h4>
+<pre><code>Object compile(content, name): get compiled function of template whose content is content and name is name
+</code></pre><h4 id="parse">parse</h4>
+<pre><code>Object parse(content, name): get compiled ast of template whose content is content and name is name
+</code></pre><h4 id="compiletostr">compileToStr</h4>
+<pre><code>String compileToStr(param:Object): get function string of template whose content is content and name is name
+</code></pre><p>param include:</p>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th style="width: 100px;">name</th>
+        <th style="width: 50px;">type</th>
+        <th style="width: 50px;">default</th>
+        <th>description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>name</td>
+        <td>String</td>
+        <td></td>
+        <td>name of template</td>
+    </tr>
+    <tr>
+        <td>content</td>
+        <td>String</td>
+        <td></td>
+        <td>content of template</td>
+    </tr>
+    <tr>
+        <td>isModule</td>
+        <td>Boolean</td>
+        <td>false</td>
+        <td>whether generate module require</td>
+    </tr>
+    </tbody>
+</table>
+          <div style="display:none;"><script type="text/javascript" src="http://tajs.qq.com/stats?sId=36378479" charset="UTF-8"></script></div>
+          <script src="http://docs.kissyui.com/1.4/source/guideline/templates/assets/com.js"></script>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
