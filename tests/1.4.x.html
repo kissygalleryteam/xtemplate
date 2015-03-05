@@ -1,0 +1,8 @@
+<script src='http://g.alicdn.com/kissy/k/1.4.2/seed.js'></script>
+<script src="../build/runtime.js" ></script>
+<script src='../build/index.js'></script>
+<script>
+KISSY.use('kg/xtemplate/4.1.4/',function(S,XTemplate){
+    console.log(new XTemplate('{{#each (d)}}{{this}}{{/each}}').render({d:[1,2]}));
+});
+</script>

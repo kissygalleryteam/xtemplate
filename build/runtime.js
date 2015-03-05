@@ -1,20 +1,30 @@
 /*
-Copyright 2014, xtemplate@4.0.3
+Copyright 2015, xtemplate@4.1.4
 MIT Licensed
-build time: Mon, 29 Dec 2014 08:04:25 GMT
+build time: Wed, 04 Feb 2015 08:24:46 GMT
 */
-define("kg/xtemplate/4.0.3/runtime",[],function(require,exports,module) {
+;(function() {
+if(window.KISSY){
+ KISSY.add("kg/xtemplate/4.1.4/runtime", [],function(S, require, exports, module){
+ _xt(require, exports, module);
+});
+ } else if (window.define){
+ define("kg/xtemplate/4.1.4/runtime", [], _xt);
+}else{
+throw new Error("Can't found any module manager, such like Kissy CMD AMD SeaJS and etc.");
+};
+function _xt(require, exports, module) {
 
 /*
 combined modules:
-xtemplate/runtime
-xtemplate/runtime/util
-xtemplate/runtime/commands
-xtemplate/runtime/scope
-xtemplate/runtime/linked-buffer
+xtemplate/4.1.4/runtime
+xtemplate/4.1.4/runtime/util
+xtemplate/4.1.4/runtime/commands
+xtemplate/4.1.4/runtime/scope
+xtemplate/4.1.4/runtime/linked-buffer
 */
-var xtemplateRuntimeUtil, xtemplateRuntimeScope, xtemplateRuntimeLinkedBuffer, xtemplateRuntimeCommands, xtemplateRuntime;
-xtemplateRuntimeUtil = function (exports) {
+var xtemplate414RuntimeUtil, xtemplate414RuntimeScope, xtemplate414RuntimeLinkedBuffer, xtemplate414RuntimeCommands, xtemplate414Runtime;
+xtemplate414RuntimeUtil = function (exports) {
   // http://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
   // http://wonko.com/post/html-escaping
   var htmlEntities = {
@@ -131,7 +141,7 @@ xtemplateRuntimeUtil = function (exports) {
   };
   return exports;
 }();
-xtemplateRuntimeScope = function (exports) {
+xtemplate414RuntimeScope = function (exports) {
   function Scope(data, affix, parent) {
     if (data !== undefined) {
       this.data = data;
@@ -282,8 +292,8 @@ xtemplateRuntimeScope = function (exports) {
   exports = Scope;
   return exports;
 }();
-xtemplateRuntimeLinkedBuffer = function (exports) {
-  var util = xtemplateRuntimeUtil;
+xtemplate414RuntimeLinkedBuffer = function (exports) {
+  var util = xtemplate414RuntimeUtil;
   function Buffer(list, next, tpl) {
     this.list = list;
     this.init();
@@ -407,9 +417,9 @@ xtemplateRuntimeLinkedBuffer = function (exports) {
   exports = LinkedBuffer;
   return exports;
 }();
-xtemplateRuntimeCommands = function (exports) {
-  var Scope = xtemplateRuntimeScope;
-  var util = xtemplateRuntimeUtil;
+xtemplate414RuntimeCommands = function (exports) {
+  var Scope = xtemplate414RuntimeScope;
+  var util = xtemplate414RuntimeUtil;
   var commands = {
     range: function (scope, option) {
       var params = option.params;
@@ -525,7 +535,27 @@ xtemplateRuntimeCommands = function (exports) {
       return buffer;
     },
     set: function (scope, option, buffer) {
-      scope.mix(option.hash);
+      var hash = option.hash;
+      var len = hash.length;
+      for (var i = 0; i < len; i++) {
+        var h = hash[i];
+        var parts = h.key;
+        var depth = h.depth;
+        var value = h.value;
+        if (parts.length === 1) {
+          var root = scope.root;
+          while (depth && root !== scope) {
+            scope = scope.parent;
+            --depth;
+          }
+          scope.set(parts[0], value);
+        } else {
+          var last = scope.resolve(parts.slice(0, -1), depth);
+          if (last) {
+            last[parts[parts.length - 1]] = value;
+          }
+        }
+      }
       return buffer;
     },
     include: 1,
@@ -622,12 +652,12 @@ xtemplateRuntimeCommands = function (exports) {
   exports = commands;
   return exports;
 }();
-xtemplateRuntime = function (exports) {
-  var util = xtemplateRuntimeUtil;
-  var nativeCommands = xtemplateRuntimeCommands;
+xtemplate414Runtime = function (exports) {
+  var util = xtemplate414RuntimeUtil;
+  var nativeCommands = xtemplate414RuntimeCommands;
   var commands = {};
-  var Scope = xtemplateRuntimeScope;
-  var LinkedBuffer = xtemplateRuntimeLinkedBuffer;
+  var Scope = xtemplate414RuntimeScope;
+  var LinkedBuffer = xtemplate414RuntimeLinkedBuffer;
   function TplWrap(name, runtime, root, scope, buffer, originalName, fn, parent) {
     this.name = name;
     this.originalName = originalName || name;
@@ -682,7 +712,12 @@ xtemplateRuntime = function (exports) {
       caller = scope.resolve(parts.slice(0, -1), depth);
       fn = caller[parts[parts.length - 1]];
       if (fn) {
-        return fn.apply(caller, option.params || []);
+        try {
+          return fn.apply(caller, option.params || []);
+        } catch (err) {
+          buffer.error('Execute function `' + parts.join('.') + '` Error: ' + err.message);
+          return buffer;
+        }
       }
     }
     buffer.error('Command Not Found: ' + parts.join('.'));
@@ -727,7 +762,6 @@ xtemplateRuntime = function (exports) {
         return globalConfig;
       }
     },
-    version: '4.0.3',
     nativeCommands: nativeCommands,
     utils: utils,
     util: util,
@@ -909,5 +943,6 @@ xtemplateRuntime = function (exports) {
   exports = XTemplateRuntime;
   return exports;
 }();
-module.exports = xtemplateRuntime;
-});
+module.exports = xtemplate414Runtime;
+};
+})();
