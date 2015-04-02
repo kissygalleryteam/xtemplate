@@ -1,20 +1,30 @@
 /*
-Copyright 2014, xtemplate@4.0.3
+Copyright 2015, @ali/xtemplate@4.2.0
 MIT Licensed
-build time: Mon, 29 Dec 2014 08:04:25 GMT
+build time: Thu, 02 Apr 2015 08:44:29 GMT
 */
-define("kg/xtemplate/4.0.3/index",["./runtime"],function(require,exports,module) {
-var xtemplateRuntime = require("./runtime");
+;(function() {
+if(window.KISSY){
+ KISSY.add("kg/xtemplate/4.2.0/index", ["kg/xtemplate/4.2.0/runtime"],function(S, require, exports, module){
+ _xt(require, exports, module);
+});
+ } else if (window.define){
+ define("kg/xtemplate/4.2.0/index", ["kg/xtemplate/4.2.0/runtime"], _xt);
+}else{
+throw new Error("Can't found any module manager, such like Kissy CMD AMD SeaJS and etc.");
+};
+function _xt(require, exports, module) {
+var xtemplate420Runtime = require("kg/xtemplate/4.2.0/runtime");
 /*
 combined modules:
-xtemplate
-xtemplate/compiler
-xtemplate/compiler/tools
-xtemplate/compiler/parser
-xtemplate/compiler/ast
+xtemplate/4.2.0/index
+xtemplate/4.2.0/compiler
+xtemplate/4.2.0/compiler/tools
+xtemplate/4.2.0/compiler/parser
+xtemplate/4.2.0/compiler/ast
 */
-var xtemplateCompilerTools, xtemplateCompilerParser, xtemplateCompilerAst, xtemplateCompiler, xtemplate;
-xtemplateCompilerTools = function (exports) {
+var xtemplate420CompilerTools, xtemplate420CompilerParser, xtemplate420CompilerAst, xtemplate420Compiler, xtemplate420Index;
+xtemplate420CompilerTools = function (exports) {
   /**
    * compiler tools
    */
@@ -23,17 +33,24 @@ xtemplateCompilerTools = function (exports) {
   var arrayPush = [].push;
   var globals = {};
   globals['undefined'] = globals['null'] = globals['true'] = globals['false'] = 1;
-  function genStackJudge(parts, data, count) {
+  function genStackJudge(parts, data, count, lastVariable) {
     if (!parts.length) {
       return data;
     }
+    lastVariable = lastVariable || data;
     count = count || 0;
     var part0 = parts[0];
-    if (parts.length === 1) {
-      return '(' + data + part0 + ')';
-    }
     var variable = 't' + count;
-    return '((' + variable + '=' + data + part0 + ') != null?' + genStackJudge(parts.slice(1), variable, ++count) + ':' + variable + ')';
+    return [
+      '(' + data + ' != null ? ',
+      genStackJudge(parts.slice(1), '(' + variable + '=' + lastVariable + part0 + ')', ++count, variable),
+      ' : ',
+      lastVariable,
+      ')'
+    ].join('');
+  }
+  function accessVariable(loose, parts, topVariable, fullVariable) {
+    return loose ? genStackJudge(parts.slice(1), topVariable) : fullVariable;
   }
   var tools = exports = {
     genStackJudge: genStackJudge,
@@ -45,8 +62,8 @@ xtemplateCompilerTools = function (exports) {
     },
     chainedVariableRead: function (self, source, idParts, root, resolveUp, loose) {
       var strs = tools.convertIdPartsToRawAccessor(self, source, idParts);
-      var part0 = strs.parts[0];
       var parts = strs.parts;
+      var part0 = parts[0];
       var scope = '';
       if (root) {
         scope = 'scope.root.';
@@ -56,20 +73,20 @@ xtemplateCompilerTools = function (exports) {
       var ret = [
         '(',
         '(t=(' + affix + part0 + ')) !== undefined ? ',
-        idParts.length > 1 ? affix + strs.str : 't',
-        ':'
+        idParts.length > 1 ? accessVariable(loose, parts, 't', affix + strs.str) : 't',
+        ' : '
       ];
       if (resolveUp) {
         ret = ret.concat([
           '(',
           '(t = ' + data + part0 + ') !== undefined ? ',
-          idParts.length > 1 ? loose ? genStackJudge(parts.slice(1), 't') : data + strs.str : 't',
-          ' :',
+          idParts.length > 1 ? accessVariable(loose, parts, 't', data + strs.str) : 't',
+          '  : ',
           loose ? 'scope.resolveLooseUp(' + strs.arr + ')' : 'scope.resolveUp(' + strs.arr + ')',
           ')'
         ]);
       } else {
-        ret.push(loose ? genStackJudge(parts, data) : data + strs.str);
+        ret.push(accessVariable(loose, parts, data + part0, data + strs.str));
       }
       ret.push(')');
       return ret.join('');
@@ -137,7 +154,7 @@ xtemplateCompilerTools = function (exports) {
   };
   return exports;
 }();
-xtemplateCompilerParser = function (exports) {
+xtemplate420CompilerParser = function (exports) {
   var parser = function (undefined) {
     var parser = {};
     var GrammarConst = {
@@ -766,8 +783,8 @@ xtemplateCompilerParser = function (exports) {
       'param': 'ar',
       'conditionalOrExpression': 'as',
       'listExpression': 'at',
-      'jsonExpression': 'au',
-      'jsonPart': 'av',
+      'objectExpression': 'au',
+      'objectPart': 'av',
       'conditionalAndExpression': 'aw',
       'equalityExpression': 'ax',
       'relationalExpression': 'ay',
@@ -976,12 +993,32 @@ xtemplateCompilerParser = function (exports) {
       [
         'ao',
         [
+          'ad',
+          'ae'
+        ],
+        function () {
+          return new this.yy.ArrayExpression([]);
+        }
+      ],
+      [
+        'ao',
+        [
           'af',
           'au',
           'ah'
         ],
         function () {
-          return new this.yy.JsonExpression(this.$2);
+          return new this.yy.ObjectExpression(this.$2);
+        }
+      ],
+      [
+        'ao',
+        [
+          'af',
+          'ah'
+        ],
+        function () {
+          return new this.yy.ObjectExpression([]);
         }
       ],
       [
@@ -1282,26 +1319,23 @@ xtemplateCompilerParser = function (exports) {
           'bd'
         ],
         function () {
-          var hash = this.$1, seg = this.$3;
-          hash.value[seg[0]] = seg[1];
+          this.$1.value.push(this.$3);
         }
       ],
       [
         'aq',
         ['bd'],
         function () {
-          var hash = new this.yy.Hash({
-              line: this.lexer.firstLine,
-              col: this.lexer.firstColumn
-            }), $1 = this.$1;
-          hash.value[$1[0]] = $1[1];
-          return hash;
+          return new this.yy.Hash({
+            line: this.lexer.firstLine,
+            col: this.lexer.firstColumn
+          }, [this.$1]);
         }
       ],
       [
         'bd',
         [
-          'ab',
+          'an',
           'aa',
           'ao'
         ],
@@ -1418,9 +1452,9 @@ xtemplateCompilerParser = function (exports) {
         '16': {
           'am': 18,
           'an': 19,
-          'ao': 38,
+          'ao': 39,
           'as': 21,
-          'at': 39,
+          'at': 40,
           'aw': 22,
           'ax': 23,
           'ay': 24,
@@ -1431,25 +1465,25 @@ xtemplateCompilerParser = function (exports) {
           'be': 10
         },
         '17': {
-          'au': 42,
-          'av': 43
+          'au': 44,
+          'av': 45
         },
         '29': {
-          'ak': 58,
+          'ak': 60,
           'al': 6
         },
         '31': {
-          'aj': 59,
+          'aj': 61,
           'ak': 5,
           'al': 6
         },
         '32': {
           'am': 18,
-          'an': 19,
-          'ao': 62,
-          'ap': 63,
-          'aq': 64,
-          'ar': 65,
+          'an': 63,
+          'ao': 64,
+          'ap': 65,
+          'aq': 66,
+          'ar': 67,
           'as': 21,
           'aw': 22,
           'ax': 23,
@@ -1458,39 +1492,16 @@ xtemplateCompilerParser = function (exports) {
           'ba': 26,
           'bb': 27,
           'bc': 28,
-          'bd': 66,
+          'bd': 68,
           'be': 10
         },
         '34': {
           'am': 18,
           'an': 19,
-          'ao': 68,
+          'ao': 70,
           'as': 21,
           'aw': 22,
           'ax': 23,
-          'ay': 24,
-          'az': 25,
-          'ba': 26,
-          'bb': 27,
-          'bc': 28,
-          'be': 10
-        },
-        '45': {
-          'am': 18,
-          'an': 19,
-          'aw': 76,
-          'ax': 23,
-          'ay': 24,
-          'az': 25,
-          'ba': 26,
-          'bb': 27,
-          'bc': 28,
-          'be': 10
-        },
-        '46': {
-          'am': 18,
-          'an': 19,
-          'ax': 77,
           'ay': 24,
           'az': 25,
           'ba': 26,
@@ -1501,7 +1512,9 @@ xtemplateCompilerParser = function (exports) {
         '47': {
           'am': 18,
           'an': 19,
-          'ay': 78,
+          'aw': 78,
+          'ax': 23,
+          'ay': 24,
           'az': 25,
           'ba': 26,
           'bb': 27,
@@ -1511,7 +1524,8 @@ xtemplateCompilerParser = function (exports) {
         '48': {
           'am': 18,
           'an': 19,
-          'ay': 79,
+          'ax': 79,
+          'ay': 24,
           'az': 25,
           'ba': 26,
           'bb': 27,
@@ -1521,7 +1535,8 @@ xtemplateCompilerParser = function (exports) {
         '49': {
           'am': 18,
           'an': 19,
-          'az': 80,
+          'ay': 80,
+          'az': 25,
           'ba': 26,
           'bb': 27,
           'bc': 28,
@@ -1530,7 +1545,8 @@ xtemplateCompilerParser = function (exports) {
         '50': {
           'am': 18,
           'an': 19,
-          'az': 81,
+          'ay': 81,
+          'az': 25,
           'ba': 26,
           'bb': 27,
           'bc': 28,
@@ -1557,7 +1573,8 @@ xtemplateCompilerParser = function (exports) {
         '53': {
           'am': 18,
           'an': 19,
-          'ba': 84,
+          'az': 84,
+          'ba': 26,
           'bb': 27,
           'bc': 28,
           'be': 10
@@ -1565,7 +1582,8 @@ xtemplateCompilerParser = function (exports) {
         '54': {
           'am': 18,
           'an': 19,
-          'ba': 85,
+          'az': 85,
+          'ba': 26,
           'bb': 27,
           'bc': 28,
           'be': 10
@@ -1573,14 +1591,16 @@ xtemplateCompilerParser = function (exports) {
         '55': {
           'am': 18,
           'an': 19,
-          'bb': 86,
+          'ba': 86,
+          'bb': 27,
           'bc': 28,
           'be': 10
         },
         '56': {
           'am': 18,
           'an': 19,
-          'bb': 87,
+          'ba': 87,
+          'bb': 27,
           'bc': 28,
           'be': 10
         },
@@ -1591,36 +1611,22 @@ xtemplateCompilerParser = function (exports) {
           'bc': 28,
           'be': 10
         },
-        '58': { 'al': 30 },
-        '70': {
+        '58': {
           'am': 18,
           'an': 19,
-          'ao': 96,
-          'as': 21,
-          'aw': 22,
-          'ax': 23,
-          'ay': 24,
-          'az': 25,
-          'ba': 26,
-          'bb': 27,
+          'bb': 89,
           'bc': 28,
           'be': 10
         },
+        '59': {
+          'am': 18,
+          'an': 19,
+          'bb': 90,
+          'bc': 28,
+          'be': 10
+        },
+        '60': { 'al': 30 },
         '72': {
-          'am': 18,
-          'an': 19,
-          'ao': 97,
-          'as': 21,
-          'aw': 22,
-          'ax': 23,
-          'ay': 24,
-          'az': 25,
-          'ba': 26,
-          'bb': 27,
-          'bc': 28,
-          'be': 10
-        },
-        '73': {
           'am': 18,
           'an': 19,
           'ao': 98,
@@ -1634,16 +1640,10 @@ xtemplateCompilerParser = function (exports) {
           'bc': 28,
           'be': 10
         },
-        '74': { 'av': 99 },
-        '89': {
-          'am': 18,
-          'an': 100,
-          'be': 10
-        },
-        '90': {
+        '74': {
           'am': 18,
           'an': 19,
-          'ao': 101,
+          'ao': 99,
           'as': 21,
           'aw': 22,
           'ax': 23,
@@ -1654,12 +1654,30 @@ xtemplateCompilerParser = function (exports) {
           'bc': 28,
           'be': 10
         },
+        '75': {
+          'am': 18,
+          'an': 19,
+          'ao': 100,
+          'as': 21,
+          'aw': 22,
+          'ax': 23,
+          'ay': 24,
+          'az': 25,
+          'ba': 26,
+          'bb': 27,
+          'bc': 28,
+          'be': 10
+        },
+        '76': { 'av': 101 },
         '91': {
           'am': 18,
+          'an': 102,
+          'be': 10
+        },
+        '92': {
+          'am': 18,
           'an': 19,
-          'ao': 62,
-          'aq': 102,
-          'ar': 103,
+          'ao': 103,
           'as': 21,
           'aw': 22,
           'ax': 23,
@@ -1668,10 +1686,31 @@ xtemplateCompilerParser = function (exports) {
           'ba': 26,
           'bb': 27,
           'bc': 28,
-          'bd': 66,
           'be': 10
         },
-        '93': { 'bd': 105 }
+        '93': {
+          'am': 18,
+          'an': 63,
+          'ao': 64,
+          'aq': 104,
+          'ar': 105,
+          'as': 21,
+          'aw': 22,
+          'ax': 23,
+          'ay': 24,
+          'az': 25,
+          'ba': 26,
+          'bb': 27,
+          'bc': 28,
+          'bd': 68,
+          'be': 10
+        },
+        '95': {
+          'am': 18,
+          'an': 106,
+          'bd': 107,
+          'be': 10
+        }
       },
       'action': {
         '0': {
@@ -1826,101 +1865,105 @@ xtemplateCompilerParser = function (exports) {
         '7': {
           'i': [
             2,
-            57
+            59
           ],
           'ac': [
             2,
-            57
+            59
           ],
           'ad': [
             2,
-            57
+            59
           ],
           'h': [
             2,
-            57
+            59
           ],
           'k': [
             2,
-            57
+            59
           ],
           'l': [
             2,
-            57
+            59
           ],
           'm': [
             2,
-            57
+            59
           ],
           'n': [
             2,
-            57
+            59
           ],
           'o': [
             2,
-            57
+            59
           ],
           'p': [
             2,
-            57
+            59
           ],
           'q': [
             2,
-            57
+            59
           ],
           'r': [
             2,
-            57
+            59
           ],
           's': [
             2,
-            57
+            59
           ],
           't': [
             2,
-            57
+            59
           ],
           'u': [
             2,
-            57
+            59
           ],
           'v': [
             2,
-            57
+            59
           ],
           'w': [
             2,
-            57
+            59
           ],
           'j': [
             2,
-            57
+            59
           ],
           'ae': [
             2,
-            57
+            59
           ],
           'g': [
             2,
-            57
+            59
+          ],
+          'aa': [
+            2,
+            59
           ],
           'ah': [
             2,
-            57
+            59
           ]
         },
         '8': {
           'i': [
             2,
-            54
+            56
           ],
           'ac': [
             2,
-            54
+            56
           ],
           'ad': [
             2,
-            54
+            56
           ],
           'h': [
             1,
@@ -1938,79 +1981,83 @@ xtemplateCompilerParser = function (exports) {
         '10': {
           'i': [
             2,
-            53
+            55
           ],
           'h': [
             2,
-            53
+            55
           ],
           'k': [
             2,
-            53
+            55
           ],
           'l': [
             2,
-            53
+            55
           ],
           'm': [
             2,
-            53
+            55
           ],
           'n': [
             2,
-            53
+            55
           ],
           'o': [
             2,
-            53
+            55
           ],
           'p': [
             2,
-            53
+            55
           ],
           'q': [
             2,
-            53
+            55
           ],
           'r': [
             2,
-            53
+            55
           ],
           's': [
             2,
-            53
+            55
           ],
           't': [
             2,
-            53
+            55
           ],
           'u': [
             2,
-            53
+            55
           ],
           'v': [
             2,
-            53
+            55
           ],
           'w': [
             2,
-            53
+            55
           ],
           'j': [
             2,
-            53
+            55
           ],
           'ae': [
             2,
-            53
+            55
           ],
           'g': [
             2,
-            53
+            55
+          ],
+          'aa': [
+            2,
+            55
           ],
           'ah': [
             2,
-            53
+            55
           ],
           'ac': [
             1,
@@ -2132,149 +2179,149 @@ xtemplateCompilerParser = function (exports) {
         '14': {
           'h': [
             2,
-            46
+            48
           ],
           'k': [
             2,
-            46
+            48
           ],
           'l': [
             2,
-            46
+            48
           ],
           'm': [
             2,
-            46
+            48
           ],
           'n': [
             2,
-            46
+            48
           ],
           'o': [
             2,
-            46
+            48
           ],
           'p': [
             2,
-            46
+            48
           ],
           'q': [
             2,
-            46
+            48
           ],
           'r': [
             2,
-            46
+            48
           ],
           's': [
             2,
-            46
+            48
           ],
           't': [
             2,
-            46
+            48
           ],
           'u': [
             2,
-            46
+            48
           ],
           'v': [
             2,
-            46
+            48
           ],
           'w': [
             2,
-            46
+            48
           ],
           'j': [
             2,
-            46
+            48
           ],
           'ae': [
             2,
-            46
+            48
           ],
           'g': [
             2,
-            46
+            48
           ],
           'ah': [
             2,
-            46
+            48
           ]
         },
         '15': {
           'h': [
             2,
-            47
+            49
           ],
           'k': [
             2,
-            47
+            49
           ],
           'l': [
             2,
-            47
+            49
           ],
           'm': [
             2,
-            47
+            49
           ],
           'n': [
             2,
-            47
+            49
           ],
           'o': [
             2,
-            47
+            49
           ],
           'p': [
             2,
-            47
+            49
           ],
           'q': [
             2,
-            47
+            49
           ],
           'r': [
             2,
-            47
+            49
           ],
           's': [
             2,
-            47
+            49
           ],
           't': [
             2,
-            47
+            49
           ],
           'u': [
             2,
-            47
+            49
           ],
           'v': [
             2,
-            47
+            49
           ],
           'w': [
             2,
-            47
+            49
           ],
           'j': [
             2,
-            47
+            49
           ],
           'ae': [
             2,
-            47
+            49
           ],
           'g': [
             2,
-            47
+            49
           ],
           'ah': [
             2,
-            47
+            49
           ]
         },
         '16': {
@@ -2313,6 +2360,11 @@ xtemplateCompilerParser = function (exports) {
             undefined,
             16
           ],
+          'ae': [
+            1,
+            undefined,
+            38
+          ],
           'af': [
             1,
             undefined,
@@ -2323,172 +2375,181 @@ xtemplateCompilerParser = function (exports) {
           'y': [
             1,
             undefined,
-            40
+            41
           ],
           'ab': [
             1,
             undefined,
-            41
+            42
+          ],
+          'ah': [
+            1,
+            undefined,
+            43
           ]
         },
         '18': {
           'h': [
             2,
-            54
+            56
           ],
           'k': [
             2,
-            54
+            56
           ],
           'i': [
             2,
-            54
+            56
           ],
           'l': [
             2,
-            54
+            56
           ],
           'm': [
             2,
-            54
+            56
           ],
           'n': [
             2,
-            54
+            56
           ],
           'o': [
             2,
-            54
+            56
           ],
           'p': [
             2,
-            54
+            56
           ],
           'q': [
             2,
-            54
+            56
           ],
           'r': [
             2,
-            54
+            56
           ],
           's': [
             2,
-            54
+            56
           ],
           't': [
             2,
-            54
+            56
           ],
           'u': [
             2,
-            54
+            56
           ],
           'v': [
             2,
-            54
+            56
           ],
           'w': [
             2,
-            54
+            56
           ],
           'ac': [
             2,
-            54
+            56
           ],
           'ad': [
             2,
-            54
+            56
           ],
           'j': [
             2,
-            54
+            56
           ],
           'ae': [
             2,
-            54
+            56
           ],
           'g': [
             2,
-            54
+            56
+          ],
+          'aa': [
+            2,
+            56
           ],
           'ah': [
             2,
-            54
+            56
           ]
         },
         '19': {
           'h': [
             2,
-            48
+            50
           ],
           'k': [
             2,
-            48
+            50
           ],
           'l': [
             2,
-            48
+            50
           ],
           'm': [
             2,
-            48
+            50
           ],
           'n': [
             2,
-            48
+            50
           ],
           'o': [
             2,
-            48
+            50
           ],
           'p': [
             2,
-            48
+            50
           ],
           'q': [
             2,
-            48
+            50
           ],
           'r': [
             2,
-            48
+            50
           ],
           's': [
             2,
-            48
+            50
           ],
           't': [
             2,
-            48
+            50
           ],
           'u': [
             2,
-            48
+            50
           ],
           'v': [
             2,
-            48
+            50
           ],
           'w': [
             2,
-            48
+            50
           ],
           'j': [
             2,
-            48
+            50
           ],
           'ae': [
             2,
-            48
+            50
           ],
           'g': [
             2,
-            48
+            50
           ],
           'ah': [
             2,
-            48
+            50
           ],
           'i': [
             1,
@@ -2500,7 +2561,7 @@ xtemplateCompilerParser = function (exports) {
           'h': [
             1,
             undefined,
-            44
+            46
           ]
         },
         '21': {
@@ -2527,50 +2588,15 @@ xtemplateCompilerParser = function (exports) {
           'k': [
             1,
             undefined,
-            45
+            47
           ]
         },
         '22': {
           'h': [
             2,
-            24
-          ],
-          'k': [
-            2,
-            24
-          ],
-          'j': [
-            2,
-            24
-          ],
-          'ae': [
-            2,
-            24
-          ],
-          'g': [
-            2,
-            24
-          ],
-          'ah': [
-            2,
-            24
-          ],
-          'l': [
-            1,
-            undefined,
-            46
-          ]
-        },
-        '23': {
-          'h': [
-            2,
             26
           ],
           'k': [
-            2,
-            26
-          ],
-          'l': [
             2,
             26
           ],
@@ -2590,18 +2616,13 @@ xtemplateCompilerParser = function (exports) {
             2,
             26
           ],
-          'm': [
-            1,
-            undefined,
-            47
-          ],
-          'n': [
+          'l': [
             1,
             undefined,
             48
           ]
         },
-        '24': {
+        '23': {
           'h': [
             2,
             28
@@ -2611,14 +2632,6 @@ xtemplateCompilerParser = function (exports) {
             28
           ],
           'l': [
-            2,
-            28
-          ],
-          'm': [
-            2,
-            28
-          ],
-          'n': [
             2,
             28
           ],
@@ -2638,314 +2651,362 @@ xtemplateCompilerParser = function (exports) {
             2,
             28
           ],
-          'o': [
+          'm': [
             1,
             undefined,
             49
           ],
-          'p': [
+          'n': [
             1,
             undefined,
             50
+          ]
+        },
+        '24': {
+          'h': [
+            2,
+            30
           ],
-          'q': [
+          'k': [
+            2,
+            30
+          ],
+          'l': [
+            2,
+            30
+          ],
+          'm': [
+            2,
+            30
+          ],
+          'n': [
+            2,
+            30
+          ],
+          'j': [
+            2,
+            30
+          ],
+          'ae': [
+            2,
+            30
+          ],
+          'g': [
+            2,
+            30
+          ],
+          'ah': [
+            2,
+            30
+          ],
+          'o': [
             1,
             undefined,
             51
           ],
-          'r': [
+          'p': [
             1,
             undefined,
             52
-          ]
-        },
-        '25': {
-          'h': [
-            2,
-            31
-          ],
-          'k': [
-            2,
-            31
-          ],
-          'l': [
-            2,
-            31
-          ],
-          'm': [
-            2,
-            31
-          ],
-          'n': [
-            2,
-            31
-          ],
-          'o': [
-            2,
-            31
-          ],
-          'p': [
-            2,
-            31
           ],
           'q': [
-            2,
-            31
-          ],
-          'r': [
-            2,
-            31
-          ],
-          'j': [
-            2,
-            31
-          ],
-          'ae': [
-            2,
-            31
-          ],
-          'g': [
-            2,
-            31
-          ],
-          'ah': [
-            2,
-            31
-          ],
-          's': [
             1,
             undefined,
             53
           ],
-          't': [
+          'r': [
             1,
             undefined,
             54
           ]
         },
-        '26': {
+        '25': {
           'h': [
             2,
-            36
+            33
           ],
           'k': [
             2,
-            36
+            33
           ],
           'l': [
             2,
-            36
+            33
           ],
           'm': [
             2,
-            36
+            33
           ],
           'n': [
             2,
-            36
+            33
           ],
           'o': [
             2,
-            36
+            33
           ],
           'p': [
             2,
-            36
+            33
           ],
           'q': [
             2,
-            36
+            33
           ],
           'r': [
             2,
-            36
-          ],
-          's': [
-            2,
-            36
-          ],
-          't': [
-            2,
-            36
+            33
           ],
           'j': [
             2,
-            36
+            33
           ],
           'ae': [
             2,
-            36
+            33
           ],
           'g': [
             2,
-            36
+            33
           ],
           'ah': [
             2,
-            36
+            33
           ],
-          'u': [
+          's': [
             1,
             undefined,
             55
           ],
-          'v': [
+          't': [
             1,
             undefined,
             56
+          ]
+        },
+        '26': {
+          'h': [
+            2,
+            38
+          ],
+          'k': [
+            2,
+            38
+          ],
+          'l': [
+            2,
+            38
+          ],
+          'm': [
+            2,
+            38
+          ],
+          'n': [
+            2,
+            38
+          ],
+          'o': [
+            2,
+            38
+          ],
+          'p': [
+            2,
+            38
+          ],
+          'q': [
+            2,
+            38
+          ],
+          'r': [
+            2,
+            38
+          ],
+          's': [
+            2,
+            38
+          ],
+          't': [
+            2,
+            38
+          ],
+          'j': [
+            2,
+            38
+          ],
+          'ae': [
+            2,
+            38
+          ],
+          'g': [
+            2,
+            38
+          ],
+          'ah': [
+            2,
+            38
+          ],
+          'u': [
+            1,
+            undefined,
+            57
+          ],
+          'v': [
+            1,
+            undefined,
+            58
           ],
           'w': [
             1,
             undefined,
-            57
+            59
           ]
         },
         '27': {
           'h': [
             2,
-            39
+            41
           ],
           'k': [
             2,
-            39
+            41
           ],
           'l': [
             2,
-            39
+            41
           ],
           'm': [
             2,
-            39
+            41
           ],
           'n': [
             2,
-            39
+            41
           ],
           'o': [
             2,
-            39
+            41
           ],
           'p': [
             2,
-            39
+            41
           ],
           'q': [
             2,
-            39
+            41
           ],
           'r': [
             2,
-            39
+            41
           ],
           's': [
             2,
-            39
+            41
           ],
           't': [
             2,
-            39
+            41
           ],
           'u': [
             2,
-            39
+            41
           ],
           'v': [
             2,
-            39
+            41
           ],
           'w': [
             2,
-            39
+            41
           ],
           'j': [
             2,
-            39
+            41
           ],
           'ae': [
             2,
-            39
+            41
           ],
           'g': [
             2,
-            39
+            41
           ],
           'ah': [
             2,
-            39
+            41
           ]
         },
         '28': {
           'h': [
             2,
-            45
+            47
           ],
           'k': [
             2,
-            45
+            47
           ],
           'l': [
             2,
-            45
+            47
           ],
           'm': [
             2,
-            45
+            47
           ],
           'n': [
             2,
-            45
+            47
           ],
           'o': [
             2,
-            45
+            47
           ],
           'p': [
             2,
-            45
+            47
           ],
           'q': [
             2,
-            45
+            47
           ],
           'r': [
             2,
-            45
+            47
           ],
           's': [
             2,
-            45
+            47
           ],
           't': [
             2,
-            45
+            47
           ],
           'u': [
             2,
-            45
+            47
           ],
           'v': [
             2,
-            45
+            47
           ],
           'w': [
             2,
-            45
+            47
           ],
           'j': [
             2,
-            45
+            47
           ],
           'ae': [
             2,
-            45
+            47
           ],
           'g': [
             2,
-            45
+            47
           ],
           'ah': [
             2,
-            45
+            47
           ]
         },
         '29': {
@@ -3017,7 +3078,7 @@ xtemplateCompilerParser = function (exports) {
           'j': [
             1,
             undefined,
-            60
+            62
           ],
           't': [
             1,
@@ -3042,7 +3103,7 @@ xtemplateCompilerParser = function (exports) {
           'ab': [
             1,
             undefined,
-            61
+            7
           ],
           'ad': [
             1,
@@ -3059,7 +3120,7 @@ xtemplateCompilerParser = function (exports) {
           'ab': [
             1,
             undefined,
-            67
+            69
           ]
         },
         '34': {
@@ -3108,216 +3169,260 @@ xtemplateCompilerParser = function (exports) {
           'j': [
             1,
             undefined,
-            69
+            71
           ]
         },
         '36': {
           'h': [
             2,
-            44
+            46
           ],
           'k': [
             2,
-            44
+            46
           ],
           'l': [
             2,
-            44
+            46
           ],
           'm': [
             2,
-            44
+            46
           ],
           'n': [
             2,
-            44
+            46
           ],
           'o': [
             2,
-            44
+            46
           ],
           'p': [
             2,
-            44
+            46
           ],
           'q': [
             2,
-            44
+            46
           ],
           'r': [
             2,
-            44
+            46
           ],
           's': [
             2,
-            44
+            46
           ],
           't': [
             2,
-            44
+            46
           ],
           'u': [
             2,
-            44
+            46
           ],
           'v': [
             2,
-            44
+            46
           ],
           'w': [
             2,
-            44
+            46
           ],
           'j': [
             2,
-            44
+            46
           ],
           'ae': [
             2,
-            44
+            46
           ],
           'g': [
             2,
-            44
+            46
           ],
           'ah': [
             2,
-            44
+            46
           ]
         },
         '37': {
           'h': [
             2,
-            43
+            45
           ],
           'k': [
             2,
-            43
+            45
           ],
           'l': [
             2,
-            43
+            45
           ],
           'm': [
             2,
-            43
+            45
           ],
           'n': [
             2,
-            43
+            45
           ],
           'o': [
             2,
-            43
+            45
           ],
           'p': [
             2,
-            43
+            45
           ],
           'q': [
             2,
-            43
+            45
           ],
           'r': [
             2,
-            43
+            45
           ],
           's': [
             2,
-            43
+            45
           ],
           't': [
             2,
-            43
+            45
           ],
           'u': [
             2,
-            43
+            45
           ],
           'v': [
             2,
-            43
+            45
           ],
           'w': [
             2,
-            43
+            45
           ],
           'j': [
             2,
-            43
+            45
           ],
           'ae': [
             2,
-            43
+            45
           ],
           'g': [
             2,
-            43
+            45
           ],
           'ah': [
             2,
-            43
+            45
           ]
         },
         '38': {
+          'h': [
+            2,
+            17
+          ],
+          'j': [
+            2,
+            17
+          ],
           'ae': [
             2,
-            22
+            17
           ],
           'g': [
             2,
-            22
+            17
+          ],
+          'ah': [
+            2,
+            17
           ]
         },
         '39': {
+          'ae': [
+            2,
+            24
+          ],
+          'g': [
+            2,
+            24
+          ]
+        },
+        '40': {
           'g': [
             1,
             undefined,
-            70
+            72
           ],
           'ae': [
             1,
             undefined,
-            71
-          ]
-        },
-        '40': {
-          'ag': [
-            1,
-            undefined,
-            72
+            73
           ]
         },
         '41': {
           'ag': [
             1,
             undefined,
-            73
+            74
           ]
         },
         '42': {
-          'g': [
-            1,
-            undefined,
-            74
-          ],
-          'ah': [
+          'ag': [
             1,
             undefined,
             75
           ]
         },
         '43': {
-          'ah': [
+          'h': [
             2,
-            20
+            19
+          ],
+          'j': [
+            2,
+            19
+          ],
+          'ae': [
+            2,
+            19
           ],
           'g': [
             2,
-            20
+            19
+          ],
+          'ah': [
+            2,
+            19
           ]
         },
         '44': {
+          'g': [
+            1,
+            undefined,
+            76
+          ],
+          'ah': [
+            1,
+            undefined,
+            77
+          ]
+        },
+        '45': {
+          'ah': [
+            2,
+            22
+          ],
+          'g': [
+            2,
+            22
+          ]
+        },
+        '46': {
           'a': [
             2,
             6
@@ -3341,70 +3446,6 @@ xtemplateCompilerParser = function (exports) {
           'd': [
             2,
             6
-          ]
-        },
-        '45': {
-          'i': [
-            1,
-            undefined,
-            11
-          ],
-          't': [
-            1,
-            undefined,
-            12
-          ],
-          'x': [
-            1,
-            undefined,
-            13
-          ],
-          'y': [
-            1,
-            undefined,
-            14
-          ],
-          'z': [
-            1,
-            undefined,
-            15
-          ],
-          'ab': [
-            1,
-            undefined,
-            7
-          ]
-        },
-        '46': {
-          'i': [
-            1,
-            undefined,
-            11
-          ],
-          't': [
-            1,
-            undefined,
-            12
-          ],
-          'x': [
-            1,
-            undefined,
-            13
-          ],
-          'y': [
-            1,
-            undefined,
-            14
-          ],
-          'z': [
-            1,
-            undefined,
-            15
-          ],
-          'ab': [
-            1,
-            undefined,
-            7
           ]
         },
         '47': {
@@ -3760,424 +3801,6 @@ xtemplateCompilerParser = function (exports) {
           ]
         },
         '58': {
-          'a': [
-            2,
-            1
-          ],
-          'd': [
-            2,
-            1
-          ],
-          'b': [
-            1,
-            undefined,
-            1
-          ],
-          'c': [
-            1,
-            undefined,
-            2
-          ],
-          'f': [
-            1,
-            undefined,
-            3
-          ]
-        },
-        '59': {
-          'd': [
-            1,
-            undefined,
-            89
-          ]
-        },
-        '60': {
-          'h': [
-            2,
-            11
-          ],
-          'i': [
-            2,
-            11
-          ],
-          'ac': [
-            2,
-            11
-          ],
-          'ad': [
-            2,
-            11
-          ],
-          'k': [
-            2,
-            11
-          ],
-          'l': [
-            2,
-            11
-          ],
-          'm': [
-            2,
-            11
-          ],
-          'n': [
-            2,
-            11
-          ],
-          'o': [
-            2,
-            11
-          ],
-          'p': [
-            2,
-            11
-          ],
-          'q': [
-            2,
-            11
-          ],
-          'r': [
-            2,
-            11
-          ],
-          's': [
-            2,
-            11
-          ],
-          't': [
-            2,
-            11
-          ],
-          'u': [
-            2,
-            11
-          ],
-          'v': [
-            2,
-            11
-          ],
-          'w': [
-            2,
-            11
-          ],
-          'j': [
-            2,
-            11
-          ],
-          'ae': [
-            2,
-            11
-          ],
-          'g': [
-            2,
-            11
-          ],
-          'ah': [
-            2,
-            11
-          ]
-        },
-        '61': {
-          'g': [
-            2,
-            57
-          ],
-          'i': [
-            2,
-            57
-          ],
-          'j': [
-            2,
-            57
-          ],
-          'k': [
-            2,
-            57
-          ],
-          'l': [
-            2,
-            57
-          ],
-          'm': [
-            2,
-            57
-          ],
-          'n': [
-            2,
-            57
-          ],
-          'o': [
-            2,
-            57
-          ],
-          'p': [
-            2,
-            57
-          ],
-          'q': [
-            2,
-            57
-          ],
-          'r': [
-            2,
-            57
-          ],
-          's': [
-            2,
-            57
-          ],
-          't': [
-            2,
-            57
-          ],
-          'u': [
-            2,
-            57
-          ],
-          'v': [
-            2,
-            57
-          ],
-          'w': [
-            2,
-            57
-          ],
-          'ac': [
-            2,
-            57
-          ],
-          'ad': [
-            2,
-            57
-          ],
-          'aa': [
-            1,
-            undefined,
-            90
-          ]
-        },
-        '62': {
-          'g': [
-            2,
-            14
-          ],
-          'j': [
-            2,
-            14
-          ]
-        },
-        '63': {
-          'g': [
-            1,
-            undefined,
-            91
-          ],
-          'j': [
-            1,
-            undefined,
-            92
-          ]
-        },
-        '64': {
-          'g': [
-            1,
-            undefined,
-            93
-          ],
-          'j': [
-            1,
-            undefined,
-            94
-          ]
-        },
-        '65': {
-          'g': [
-            2,
-            13
-          ],
-          'j': [
-            2,
-            13
-          ]
-        },
-        '66': {
-          'j': [
-            2,
-            51
-          ],
-          'g': [
-            2,
-            51
-          ]
-        },
-        '67': {
-          'i': [
-            2,
-            55
-          ],
-          'ac': [
-            2,
-            55
-          ],
-          'ad': [
-            2,
-            55
-          ],
-          'h': [
-            2,
-            55
-          ],
-          'k': [
-            2,
-            55
-          ],
-          'l': [
-            2,
-            55
-          ],
-          'm': [
-            2,
-            55
-          ],
-          'n': [
-            2,
-            55
-          ],
-          'o': [
-            2,
-            55
-          ],
-          'p': [
-            2,
-            55
-          ],
-          'q': [
-            2,
-            55
-          ],
-          'r': [
-            2,
-            55
-          ],
-          's': [
-            2,
-            55
-          ],
-          't': [
-            2,
-            55
-          ],
-          'u': [
-            2,
-            55
-          ],
-          'v': [
-            2,
-            55
-          ],
-          'w': [
-            2,
-            55
-          ],
-          'j': [
-            2,
-            55
-          ],
-          'ae': [
-            2,
-            55
-          ],
-          'g': [
-            2,
-            55
-          ],
-          'ah': [
-            2,
-            55
-          ]
-        },
-        '68': {
-          'ae': [
-            1,
-            undefined,
-            95
-          ]
-        },
-        '69': {
-          'h': [
-            2,
-            49
-          ],
-          'k': [
-            2,
-            49
-          ],
-          'l': [
-            2,
-            49
-          ],
-          'm': [
-            2,
-            49
-          ],
-          'n': [
-            2,
-            49
-          ],
-          'o': [
-            2,
-            49
-          ],
-          'p': [
-            2,
-            49
-          ],
-          'q': [
-            2,
-            49
-          ],
-          'r': [
-            2,
-            49
-          ],
-          's': [
-            2,
-            49
-          ],
-          't': [
-            2,
-            49
-          ],
-          'u': [
-            2,
-            49
-          ],
-          'v': [
-            2,
-            49
-          ],
-          'w': [
-            2,
-            49
-          ],
-          'j': [
-            2,
-            49
-          ],
-          'ae': [
-            2,
-            49
-          ],
-          'g': [
-            2,
-            49
-          ],
-          'ah': [
-            2,
-            49
-          ]
-        },
-        '70': {
           'i': [
             1,
             undefined,
@@ -4207,38 +3830,457 @@ xtemplateCompilerParser = function (exports) {
             1,
             undefined,
             7
+          ]
+        },
+        '59': {
+          'i': [
+            1,
+            undefined,
+            11
+          ],
+          't': [
+            1,
+            undefined,
+            12
+          ],
+          'x': [
+            1,
+            undefined,
+            13
+          ],
+          'y': [
+            1,
+            undefined,
+            14
+          ],
+          'z': [
+            1,
+            undefined,
+            15
+          ],
+          'ab': [
+            1,
+            undefined,
+            7
+          ]
+        },
+        '60': {
+          'a': [
+            2,
+            1
+          ],
+          'd': [
+            2,
+            1
+          ],
+          'b': [
+            1,
+            undefined,
+            1
+          ],
+          'c': [
+            1,
+            undefined,
+            2
+          ],
+          'f': [
+            1,
+            undefined,
+            3
+          ]
+        },
+        '61': {
+          'd': [
+            1,
+            undefined,
+            91
+          ]
+        },
+        '62': {
+          'h': [
+            2,
+            11
+          ],
+          'i': [
+            2,
+            11
+          ],
+          'ac': [
+            2,
+            11
           ],
           'ad': [
-            1,
-            undefined,
-            16
+            2,
+            11
           ],
-          'af': [
+          'k': [
+            2,
+            11
+          ],
+          'l': [
+            2,
+            11
+          ],
+          'm': [
+            2,
+            11
+          ],
+          'n': [
+            2,
+            11
+          ],
+          'o': [
+            2,
+            11
+          ],
+          'p': [
+            2,
+            11
+          ],
+          'q': [
+            2,
+            11
+          ],
+          'r': [
+            2,
+            11
+          ],
+          's': [
+            2,
+            11
+          ],
+          't': [
+            2,
+            11
+          ],
+          'u': [
+            2,
+            11
+          ],
+          'v': [
+            2,
+            11
+          ],
+          'w': [
+            2,
+            11
+          ],
+          'j': [
+            2,
+            11
+          ],
+          'ae': [
+            2,
+            11
+          ],
+          'g': [
+            2,
+            11
+          ],
+          'aa': [
+            2,
+            11
+          ],
+          'ah': [
+            2,
+            11
+          ]
+        },
+        '63': {
+          'g': [
+            2,
+            50
+          ],
+          'j': [
+            2,
+            50
+          ],
+          'k': [
+            2,
+            50
+          ],
+          'l': [
+            2,
+            50
+          ],
+          'm': [
+            2,
+            50
+          ],
+          'n': [
+            2,
+            50
+          ],
+          'o': [
+            2,
+            50
+          ],
+          'p': [
+            2,
+            50
+          ],
+          'q': [
+            2,
+            50
+          ],
+          'r': [
+            2,
+            50
+          ],
+          's': [
+            2,
+            50
+          ],
+          't': [
+            2,
+            50
+          ],
+          'u': [
+            2,
+            50
+          ],
+          'v': [
+            2,
+            50
+          ],
+          'w': [
+            2,
+            50
+          ],
+          'i': [
             1,
             undefined,
-            17
+            32
+          ],
+          'aa': [
+            1,
+            undefined,
+            92
+          ]
+        },
+        '64': {
+          'g': [
+            2,
+            14
+          ],
+          'j': [
+            2,
+            14
+          ]
+        },
+        '65': {
+          'g': [
+            1,
+            undefined,
+            93
+          ],
+          'j': [
+            1,
+            undefined,
+            94
+          ]
+        },
+        '66': {
+          'g': [
+            1,
+            undefined,
+            95
+          ],
+          'j': [
+            1,
+            undefined,
+            96
+          ]
+        },
+        '67': {
+          'g': [
+            2,
+            13
+          ],
+          'j': [
+            2,
+            13
+          ]
+        },
+        '68': {
+          'j': [
+            2,
+            53
+          ],
+          'g': [
+            2,
+            53
+          ]
+        },
+        '69': {
+          'i': [
+            2,
+            57
+          ],
+          'ac': [
+            2,
+            57
+          ],
+          'ad': [
+            2,
+            57
+          ],
+          'h': [
+            2,
+            57
+          ],
+          'k': [
+            2,
+            57
+          ],
+          'l': [
+            2,
+            57
+          ],
+          'm': [
+            2,
+            57
+          ],
+          'n': [
+            2,
+            57
+          ],
+          'o': [
+            2,
+            57
+          ],
+          'p': [
+            2,
+            57
+          ],
+          'q': [
+            2,
+            57
+          ],
+          'r': [
+            2,
+            57
+          ],
+          's': [
+            2,
+            57
+          ],
+          't': [
+            2,
+            57
+          ],
+          'u': [
+            2,
+            57
+          ],
+          'v': [
+            2,
+            57
+          ],
+          'w': [
+            2,
+            57
+          ],
+          'j': [
+            2,
+            57
+          ],
+          'ae': [
+            2,
+            57
+          ],
+          'g': [
+            2,
+            57
+          ],
+          'aa': [
+            2,
+            57
+          ],
+          'ah': [
+            2,
+            57
+          ]
+        },
+        '70': {
+          'ae': [
+            1,
+            undefined,
+            97
           ]
         },
         '71': {
           'h': [
             2,
-            16
+            51
+          ],
+          'k': [
+            2,
+            51
+          ],
+          'l': [
+            2,
+            51
+          ],
+          'm': [
+            2,
+            51
+          ],
+          'n': [
+            2,
+            51
+          ],
+          'o': [
+            2,
+            51
+          ],
+          'p': [
+            2,
+            51
+          ],
+          'q': [
+            2,
+            51
+          ],
+          'r': [
+            2,
+            51
+          ],
+          's': [
+            2,
+            51
+          ],
+          't': [
+            2,
+            51
+          ],
+          'u': [
+            2,
+            51
+          ],
+          'v': [
+            2,
+            51
+          ],
+          'w': [
+            2,
+            51
           ],
           'j': [
             2,
-            16
+            51
           ],
           'ae': [
             2,
-            16
+            51
           ],
           'g': [
             2,
-            16
+            51
           ],
           'ah': [
             2,
-            16
+            51
           ]
         },
         '72': {
@@ -4284,6 +4326,28 @@ xtemplateCompilerParser = function (exports) {
           ]
         },
         '73': {
+          'h': [
+            2,
+            16
+          ],
+          'j': [
+            2,
+            16
+          ],
+          'ae': [
+            2,
+            16
+          ],
+          'g': [
+            2,
+            16
+          ],
+          'ah': [
+            2,
+            16
+          ]
+        },
+        '74': {
           'i': [
             1,
             undefined,
@@ -4325,286 +4389,206 @@ xtemplateCompilerParser = function (exports) {
             17
           ]
         },
-        '74': {
+        '75': {
+          'i': [
+            1,
+            undefined,
+            11
+          ],
+          't': [
+            1,
+            undefined,
+            12
+          ],
+          'x': [
+            1,
+            undefined,
+            13
+          ],
           'y': [
             1,
             undefined,
-            40
+            14
+          ],
+          'z': [
+            1,
+            undefined,
+            15
           ],
           'ab': [
             1,
             undefined,
-            41
-          ]
-        },
-        '75': {
-          'h': [
-            2,
-            17
+            7
           ],
-          'j': [
-            2,
-            17
+          'ad': [
+            1,
+            undefined,
+            16
           ],
-          'ae': [
-            2,
-            17
-          ],
-          'g': [
-            2,
-            17
-          ],
-          'ah': [
-            2,
+          'af': [
+            1,
+            undefined,
             17
           ]
         },
         '76': {
-          'h': [
-            2,
-            25
-          ],
-          'k': [
-            2,
-            25
-          ],
-          'j': [
-            2,
-            25
-          ],
-          'ae': [
-            2,
-            25
-          ],
-          'g': [
-            2,
-            25
-          ],
-          'ah': [
-            2,
-            25
-          ],
-          'l': [
+          'y': [
             1,
             undefined,
-            46
+            41
+          ],
+          'ab': [
+            1,
+            undefined,
+            42
           ]
         },
         '77': {
           'h': [
             2,
-            27
-          ],
-          'k': [
-            2,
-            27
-          ],
-          'l': [
-            2,
-            27
+            18
           ],
           'j': [
             2,
-            27
+            18
           ],
           'ae': [
             2,
-            27
+            18
           ],
           'g': [
             2,
-            27
+            18
           ],
           'ah': [
             2,
-            27
-          ],
-          'm': [
-            1,
-            undefined,
-            47
-          ],
-          'n': [
-            1,
-            undefined,
-            48
+            18
           ]
         },
         '78': {
           'h': [
             2,
-            29
+            27
           ],
           'k': [
             2,
-            29
-          ],
-          'l': [
-            2,
-            29
-          ],
-          'm': [
-            2,
-            29
-          ],
-          'n': [
-            2,
-            29
+            27
           ],
           'j': [
             2,
-            29
+            27
           ],
           'ae': [
             2,
-            29
+            27
           ],
           'g': [
             2,
-            29
+            27
           ],
           'ah': [
             2,
-            29
+            27
           ],
-          'o': [
+          'l': [
             1,
             undefined,
-            49
-          ],
-          'p': [
-            1,
-            undefined,
-            50
-          ],
-          'q': [
-            1,
-            undefined,
-            51
-          ],
-          'r': [
-            1,
-            undefined,
-            52
+            48
           ]
         },
         '79': {
           'h': [
             2,
-            30
+            29
           ],
           'k': [
             2,
-            30
+            29
           ],
           'l': [
             2,
-            30
-          ],
-          'm': [
-            2,
-            30
-          ],
-          'n': [
-            2,
-            30
+            29
           ],
           'j': [
             2,
-            30
+            29
           ],
           'ae': [
             2,
-            30
+            29
           ],
           'g': [
             2,
-            30
+            29
           ],
           'ah': [
             2,
-            30
+            29
           ],
-          'o': [
+          'm': [
             1,
             undefined,
             49
           ],
-          'p': [
+          'n': [
             1,
             undefined,
             50
-          ],
-          'q': [
-            1,
-            undefined,
-            51
-          ],
-          'r': [
-            1,
-            undefined,
-            52
           ]
         },
         '80': {
           'h': [
             2,
-            35
+            31
           ],
           'k': [
             2,
-            35
+            31
           ],
           'l': [
             2,
-            35
+            31
           ],
           'm': [
             2,
-            35
+            31
           ],
           'n': [
             2,
-            35
-          ],
-          'o': [
-            2,
-            35
-          ],
-          'p': [
-            2,
-            35
-          ],
-          'q': [
-            2,
-            35
-          ],
-          'r': [
-            2,
-            35
+            31
           ],
           'j': [
             2,
-            35
+            31
           ],
           'ae': [
             2,
-            35
+            31
           ],
           'g': [
             2,
-            35
+            31
           ],
           'ah': [
             2,
-            35
+            31
           ],
-          's': [
+          'o': [
+            1,
+            undefined,
+            51
+          ],
+          'p': [
+            1,
+            undefined,
+            52
+          ],
+          'q': [
             1,
             undefined,
             53
           ],
-          't': [
+          'r': [
             1,
             undefined,
             54
@@ -4613,62 +4597,56 @@ xtemplateCompilerParser = function (exports) {
         '81': {
           'h': [
             2,
-            34
+            32
           ],
           'k': [
             2,
-            34
+            32
           ],
           'l': [
             2,
-            34
+            32
           ],
           'm': [
             2,
-            34
+            32
           ],
           'n': [
             2,
-            34
-          ],
-          'o': [
-            2,
-            34
-          ],
-          'p': [
-            2,
-            34
-          ],
-          'q': [
-            2,
-            34
-          ],
-          'r': [
-            2,
-            34
+            32
           ],
           'j': [
             2,
-            34
+            32
           ],
           'ae': [
             2,
-            34
+            32
           ],
           'g': [
             2,
-            34
+            32
           ],
           'ah': [
             2,
-            34
+            32
           ],
-          's': [
+          'o': [
+            1,
+            undefined,
+            51
+          ],
+          'p': [
+            1,
+            undefined,
+            52
+          ],
+          'q': [
             1,
             undefined,
             53
           ],
-          't': [
+          'r': [
             1,
             undefined,
             54
@@ -4677,431 +4655,411 @@ xtemplateCompilerParser = function (exports) {
         '82': {
           'h': [
             2,
-            33
+            37
           ],
           'k': [
             2,
-            33
+            37
           ],
           'l': [
             2,
-            33
+            37
           ],
           'm': [
             2,
-            33
+            37
           ],
           'n': [
             2,
-            33
+            37
           ],
           'o': [
             2,
-            33
+            37
           ],
           'p': [
             2,
-            33
+            37
           ],
           'q': [
             2,
-            33
+            37
           ],
           'r': [
             2,
-            33
+            37
           ],
           'j': [
             2,
-            33
+            37
           ],
           'ae': [
             2,
-            33
+            37
           ],
           'g': [
             2,
-            33
+            37
           ],
           'ah': [
             2,
-            33
+            37
           ],
           's': [
             1,
             undefined,
-            53
+            55
           ],
           't': [
             1,
             undefined,
-            54
+            56
           ]
         },
         '83': {
           'h': [
             2,
-            32
+            36
           ],
           'k': [
             2,
-            32
+            36
           ],
           'l': [
             2,
-            32
+            36
           ],
           'm': [
             2,
-            32
+            36
           ],
           'n': [
             2,
-            32
+            36
           ],
           'o': [
             2,
-            32
+            36
           ],
           'p': [
             2,
-            32
+            36
           ],
           'q': [
             2,
-            32
+            36
           ],
           'r': [
             2,
-            32
+            36
           ],
           'j': [
             2,
-            32
+            36
           ],
           'ae': [
             2,
-            32
+            36
           ],
           'g': [
             2,
-            32
+            36
           ],
           'ah': [
             2,
-            32
+            36
           ],
           's': [
             1,
             undefined,
-            53
+            55
           ],
           't': [
             1,
             undefined,
-            54
+            56
           ]
         },
         '84': {
           'h': [
             2,
-            37
+            35
           ],
           'k': [
             2,
-            37
+            35
           ],
           'l': [
             2,
-            37
+            35
           ],
           'm': [
             2,
-            37
+            35
           ],
           'n': [
             2,
-            37
+            35
           ],
           'o': [
             2,
-            37
+            35
           ],
           'p': [
             2,
-            37
+            35
           ],
           'q': [
             2,
-            37
+            35
           ],
           'r': [
             2,
-            37
-          ],
-          's': [
-            2,
-            37
-          ],
-          't': [
-            2,
-            37
+            35
           ],
           'j': [
             2,
-            37
+            35
           ],
           'ae': [
             2,
-            37
+            35
           ],
           'g': [
             2,
-            37
+            35
           ],
           'ah': [
             2,
-            37
+            35
           ],
-          'u': [
+          's': [
             1,
             undefined,
             55
           ],
-          'v': [
+          't': [
             1,
             undefined,
             56
-          ],
-          'w': [
-            1,
-            undefined,
-            57
           ]
         },
         '85': {
           'h': [
             2,
-            38
+            34
           ],
           'k': [
             2,
-            38
+            34
           ],
           'l': [
             2,
-            38
+            34
           ],
           'm': [
             2,
-            38
+            34
           ],
           'n': [
             2,
-            38
+            34
           ],
           'o': [
             2,
-            38
+            34
           ],
           'p': [
             2,
-            38
+            34
           ],
           'q': [
             2,
-            38
+            34
           ],
           'r': [
             2,
-            38
-          ],
-          's': [
-            2,
-            38
-          ],
-          't': [
-            2,
-            38
+            34
           ],
           'j': [
             2,
-            38
+            34
           ],
           'ae': [
             2,
-            38
+            34
           ],
           'g': [
             2,
-            38
+            34
           ],
           'ah': [
             2,
-            38
+            34
           ],
-          'u': [
+          's': [
             1,
             undefined,
             55
           ],
-          'v': [
+          't': [
             1,
             undefined,
             56
-          ],
-          'w': [
-            1,
-            undefined,
-            57
           ]
         },
         '86': {
           'h': [
             2,
-            40
+            39
           ],
           'k': [
             2,
-            40
+            39
           ],
           'l': [
             2,
-            40
+            39
           ],
           'm': [
             2,
-            40
+            39
           ],
           'n': [
             2,
-            40
+            39
           ],
           'o': [
             2,
-            40
+            39
           ],
           'p': [
             2,
-            40
+            39
           ],
           'q': [
             2,
-            40
+            39
           ],
           'r': [
             2,
-            40
+            39
           ],
           's': [
             2,
-            40
+            39
           ],
           't': [
             2,
-            40
-          ],
-          'u': [
-            2,
-            40
-          ],
-          'v': [
-            2,
-            40
-          ],
-          'w': [
-            2,
-            40
+            39
           ],
           'j': [
             2,
-            40
+            39
           ],
           'ae': [
             2,
-            40
+            39
           ],
           'g': [
             2,
-            40
+            39
           ],
           'ah': [
             2,
-            40
+            39
+          ],
+          'u': [
+            1,
+            undefined,
+            57
+          ],
+          'v': [
+            1,
+            undefined,
+            58
+          ],
+          'w': [
+            1,
+            undefined,
+            59
           ]
         },
         '87': {
           'h': [
             2,
-            41
+            40
           ],
           'k': [
             2,
-            41
+            40
           ],
           'l': [
             2,
-            41
+            40
           ],
           'm': [
             2,
-            41
+            40
           ],
           'n': [
             2,
-            41
+            40
           ],
           'o': [
             2,
-            41
+            40
           ],
           'p': [
             2,
-            41
+            40
           ],
           'q': [
             2,
-            41
+            40
           ],
           'r': [
             2,
-            41
+            40
           ],
           's': [
             2,
-            41
+            40
           ],
           't': [
             2,
-            41
-          ],
-          'u': [
-            2,
-            41
-          ],
-          'v': [
-            2,
-            41
-          ],
-          'w': [
-            2,
-            41
+            40
           ],
           'j': [
             2,
-            41
+            40
           ],
           'ae': [
             2,
-            41
+            40
           ],
           'g': [
             2,
-            41
+            40
           ],
           'ah': [
             2,
-            41
+            40
+          ],
+          'u': [
+            1,
+            undefined,
+            57
+          ],
+          'v': [
+            1,
+            undefined,
+            58
+          ],
+          'w': [
+            1,
+            undefined,
+            59
           ]
         },
         '88': {
@@ -5179,394 +5137,544 @@ xtemplateCompilerParser = function (exports) {
           ]
         },
         '89': {
-          'ab': [
-            1,
-            undefined,
-            7
-          ]
-        },
-        '90': {
-          'i': [
-            1,
-            undefined,
-            11
-          ],
-          't': [
-            1,
-            undefined,
-            12
-          ],
-          'x': [
-            1,
-            undefined,
-            13
-          ],
-          'y': [
-            1,
-            undefined,
-            14
-          ],
-          'z': [
-            1,
-            undefined,
-            15
-          ],
-          'ab': [
-            1,
-            undefined,
-            7
-          ],
-          'ad': [
-            1,
-            undefined,
-            16
-          ],
-          'af': [
-            1,
-            undefined,
-            17
-          ]
-        },
-        '91': {
-          'i': [
-            1,
-            undefined,
-            11
-          ],
-          't': [
-            1,
-            undefined,
-            12
-          ],
-          'x': [
-            1,
-            undefined,
-            13
-          ],
-          'y': [
-            1,
-            undefined,
-            14
-          ],
-          'z': [
-            1,
-            undefined,
-            15
-          ],
-          'ab': [
-            1,
-            undefined,
-            61
-          ],
-          'ad': [
-            1,
-            undefined,
-            16
-          ],
-          'af': [
-            1,
-            undefined,
-            17
-          ]
-        },
-        '92': {
           'h': [
             2,
-            9
-          ],
-          'i': [
-            2,
-            9
-          ],
-          'ac': [
-            2,
-            9
-          ],
-          'ad': [
-            2,
-            9
+            43
           ],
           'k': [
             2,
-            9
+            43
           ],
           'l': [
             2,
-            9
+            43
           ],
           'm': [
             2,
-            9
+            43
           ],
           'n': [
             2,
-            9
+            43
           ],
           'o': [
             2,
-            9
+            43
           ],
           'p': [
             2,
-            9
+            43
           ],
           'q': [
             2,
-            9
+            43
           ],
           'r': [
             2,
-            9
+            43
           ],
           's': [
             2,
-            9
+            43
           ],
           't': [
             2,
-            9
+            43
           ],
           'u': [
             2,
-            9
+            43
           ],
           'v': [
             2,
-            9
+            43
           ],
           'w': [
             2,
-            9
+            43
           ],
           'j': [
             2,
-            9
+            43
           ],
           'ae': [
             2,
-            9
+            43
           ],
           'g': [
             2,
-            9
+            43
           ],
           'ah': [
             2,
-            9
+            43
           ]
         },
-        '93': {
+        '90': {
+          'h': [
+            2,
+            44
+          ],
+          'k': [
+            2,
+            44
+          ],
+          'l': [
+            2,
+            44
+          ],
+          'm': [
+            2,
+            44
+          ],
+          'n': [
+            2,
+            44
+          ],
+          'o': [
+            2,
+            44
+          ],
+          'p': [
+            2,
+            44
+          ],
+          'q': [
+            2,
+            44
+          ],
+          'r': [
+            2,
+            44
+          ],
+          's': [
+            2,
+            44
+          ],
+          't': [
+            2,
+            44
+          ],
+          'u': [
+            2,
+            44
+          ],
+          'v': [
+            2,
+            44
+          ],
+          'w': [
+            2,
+            44
+          ],
+          'j': [
+            2,
+            44
+          ],
+          'ae': [
+            2,
+            44
+          ],
+          'g': [
+            2,
+            44
+          ],
+          'ah': [
+            2,
+            44
+          ]
+        },
+        '91': {
           'ab': [
             1,
             undefined,
-            104
+            7
+          ]
+        },
+        '92': {
+          'i': [
+            1,
+            undefined,
+            11
+          ],
+          't': [
+            1,
+            undefined,
+            12
+          ],
+          'x': [
+            1,
+            undefined,
+            13
+          ],
+          'y': [
+            1,
+            undefined,
+            14
+          ],
+          'z': [
+            1,
+            undefined,
+            15
+          ],
+          'ab': [
+            1,
+            undefined,
+            7
+          ],
+          'ad': [
+            1,
+            undefined,
+            16
+          ],
+          'af': [
+            1,
+            undefined,
+            17
+          ]
+        },
+        '93': {
+          'i': [
+            1,
+            undefined,
+            11
+          ],
+          't': [
+            1,
+            undefined,
+            12
+          ],
+          'x': [
+            1,
+            undefined,
+            13
+          ],
+          'y': [
+            1,
+            undefined,
+            14
+          ],
+          'z': [
+            1,
+            undefined,
+            15
+          ],
+          'ab': [
+            1,
+            undefined,
+            7
+          ],
+          'ad': [
+            1,
+            undefined,
+            16
+          ],
+          'af': [
+            1,
+            undefined,
+            17
           ]
         },
         '94': {
           'h': [
             2,
-            10
+            9
           ],
           'i': [
             2,
-            10
+            9
           ],
           'ac': [
             2,
-            10
+            9
           ],
           'ad': [
             2,
-            10
+            9
           ],
           'k': [
             2,
-            10
+            9
           ],
           'l': [
             2,
-            10
+            9
           ],
           'm': [
             2,
-            10
+            9
           ],
           'n': [
             2,
-            10
+            9
           ],
           'o': [
             2,
-            10
+            9
           ],
           'p': [
             2,
-            10
+            9
           ],
           'q': [
             2,
-            10
+            9
           ],
           'r': [
             2,
-            10
+            9
           ],
           's': [
             2,
-            10
+            9
           ],
           't': [
             2,
-            10
+            9
           ],
           'u': [
             2,
-            10
+            9
           ],
           'v': [
             2,
-            10
+            9
           ],
           'w': [
             2,
-            10
+            9
           ],
           'j': [
             2,
-            10
+            9
           ],
           'ae': [
             2,
-            10
+            9
           ],
           'g': [
             2,
-            10
+            9
+          ],
+          'aa': [
+            2,
+            9
           ],
           'ah': [
             2,
-            10
+            9
           ]
         },
         '95': {
-          'i': [
-            2,
-            56
-          ],
-          'ac': [
-            2,
-            56
-          ],
-          'ad': [
-            2,
-            56
-          ],
-          'h': [
-            2,
-            56
-          ],
-          'k': [
-            2,
-            56
-          ],
-          'l': [
-            2,
-            56
-          ],
-          'm': [
-            2,
-            56
-          ],
-          'n': [
-            2,
-            56
-          ],
-          'o': [
-            2,
-            56
-          ],
-          'p': [
-            2,
-            56
-          ],
-          'q': [
-            2,
-            56
-          ],
-          'r': [
-            2,
-            56
-          ],
-          's': [
-            2,
-            56
-          ],
-          't': [
-            2,
-            56
-          ],
-          'u': [
-            2,
-            56
-          ],
-          'v': [
-            2,
-            56
-          ],
-          'w': [
-            2,
-            56
-          ],
-          'j': [
-            2,
-            56
-          ],
-          'ae': [
-            2,
-            56
-          ],
-          'g': [
-            2,
-            56
-          ],
-          'ah': [
-            2,
-            56
+          'ab': [
+            1,
+            undefined,
+            7
           ]
         },
         '96': {
+          'h': [
+            2,
+            10
+          ],
+          'i': [
+            2,
+            10
+          ],
+          'ac': [
+            2,
+            10
+          ],
+          'ad': [
+            2,
+            10
+          ],
+          'k': [
+            2,
+            10
+          ],
+          'l': [
+            2,
+            10
+          ],
+          'm': [
+            2,
+            10
+          ],
+          'n': [
+            2,
+            10
+          ],
+          'o': [
+            2,
+            10
+          ],
+          'p': [
+            2,
+            10
+          ],
+          'q': [
+            2,
+            10
+          ],
+          'r': [
+            2,
+            10
+          ],
+          's': [
+            2,
+            10
+          ],
+          't': [
+            2,
+            10
+          ],
+          'u': [
+            2,
+            10
+          ],
+          'v': [
+            2,
+            10
+          ],
+          'w': [
+            2,
+            10
+          ],
+          'j': [
+            2,
+            10
+          ],
           'ae': [
             2,
-            23
+            10
           ],
           'g': [
             2,
-            23
+            10
+          ],
+          'aa': [
+            2,
+            10
+          ],
+          'ah': [
+            2,
+            10
           ]
         },
         '97': {
-          'ah': [
+          'i': [
             2,
-            18
+            58
+          ],
+          'ac': [
+            2,
+            58
+          ],
+          'ad': [
+            2,
+            58
+          ],
+          'h': [
+            2,
+            58
+          ],
+          'k': [
+            2,
+            58
+          ],
+          'l': [
+            2,
+            58
+          ],
+          'm': [
+            2,
+            58
+          ],
+          'n': [
+            2,
+            58
+          ],
+          'o': [
+            2,
+            58
+          ],
+          'p': [
+            2,
+            58
+          ],
+          'q': [
+            2,
+            58
+          ],
+          'r': [
+            2,
+            58
+          ],
+          's': [
+            2,
+            58
+          ],
+          't': [
+            2,
+            58
+          ],
+          'u': [
+            2,
+            58
+          ],
+          'v': [
+            2,
+            58
+          ],
+          'w': [
+            2,
+            58
+          ],
+          'j': [
+            2,
+            58
+          ],
+          'ae': [
+            2,
+            58
           ],
           'g': [
             2,
-            18
+            58
+          ],
+          'aa': [
+            2,
+            58
+          ],
+          'ah': [
+            2,
+            58
           ]
         },
         '98': {
-          'ah': [
+          'ae': [
             2,
-            19
+            25
           ],
           'g': [
             2,
-            19
+            25
           ]
         },
         '99': {
           'ah': [
             2,
+            20
+          ],
+          'g': [
+            2,
+            20
+          ]
+        },
+        '100': {
+          'ah': [
+            2,
             21
           ],
           'g': [
@@ -5574,11 +5682,21 @@ xtemplateCompilerParser = function (exports) {
             21
           ]
         },
-        '100': {
+        '101': {
+          'ah': [
+            2,
+            23
+          ],
+          'g': [
+            2,
+            23
+          ]
+        },
+        '102': {
           'h': [
             1,
             undefined,
-            106
+            108
           ],
           'i': [
             1,
@@ -5586,56 +5704,61 @@ xtemplateCompilerParser = function (exports) {
             32
           ]
         },
-        '101': {
-          'j': [
-            2,
-            52
-          ],
-          'g': [
-            2,
-            52
-          ]
-        },
-        '102': {
-          'g': [
-            1,
-            undefined,
-            93
-          ],
-          'j': [
-            1,
-            undefined,
-            107
-          ]
-        },
         '103': {
-          'g': [
-            2,
-            12
-          ],
           'j': [
             2,
-            12
+            54
+          ],
+          'g': [
+            2,
+            54
           ]
         },
         '104': {
-          'aa': [
+          'g': [
             1,
             undefined,
-            90
+            95
+          ],
+          'j': [
+            1,
+            undefined,
+            109
           ]
         },
         '105': {
-          'j': [
-            2,
-            50
-          ],
           'g': [
             2,
-            50
+            12
+          ],
+          'j': [
+            2,
+            12
           ]
         },
         '106': {
+          'i': [
+            1,
+            undefined,
+            32
+          ],
+          'aa': [
+            1,
+            undefined,
+            92
+          ]
+        },
+        '107': {
+          'j': [
+            2,
+            52
+          ],
+          'g': [
+            2,
+            52
+          ]
+        },
+        '108': {
           'a': [
             2,
             5
@@ -5661,7 +5784,7 @@ xtemplateCompilerParser = function (exports) {
             5
           ]
         },
-        '107': {
+        '109': {
           'h': [
             2,
             8
@@ -5739,6 +5862,10 @@ xtemplateCompilerParser = function (exports) {
             8
           ],
           'g': [
+            2,
+            8
+          ],
+          'aa': [
             2,
             8
           ],
@@ -5836,7 +5963,7 @@ xtemplateCompilerParser = function (exports) {
   }
   return exports;
 }();
-xtemplateCompilerAst = function (exports) {
+xtemplate420CompilerAst = function (exports) {
   var ast = {};
   function sameArray(a1, a2) {
     var l1 = a1.length, l2 = a2.length;
@@ -5949,9 +6076,8 @@ xtemplateCompilerAst = function (exports) {
     self.value = value;
   };
   ast.Number.prototype.type = 'number';
-  ast.Hash = function (pos) {
+  ast.Hash = function (pos, value) {
     var self = this;
-    var value = {};
     self.pos = pos;
     self.value = value;
   };
@@ -5960,10 +6086,10 @@ xtemplateCompilerAst = function (exports) {
     this.list = list;
   };
   ast.ArrayExpression.prototype.type = 'arrayExpression';
-  ast.JsonExpression = function (json) {
-    this.json = json;
+  ast.ObjectExpression = function (obj) {
+    this.obj = obj;
   };
-  ast.JsonExpression.prototype.type = 'jsonExpression';
+  ast.ObjectExpression.prototype.type = 'objectExpression';
   ast.Id = function (pos, raw) {
     var self = this;
     var parts = [];
@@ -5985,9 +6111,9 @@ xtemplateCompilerAst = function (exports) {
   exports = ast;
   return exports;
 }();
-xtemplateCompiler = function (exports) {
-  var util = xtemplateRuntime.util;
-  var compilerTools = xtemplateCompilerTools;
+xtemplate420Compiler = function (exports) {
+  var util = xtemplate420Runtime.util;
+  var compilerTools = xtemplate420CompilerTools;
   var pushToArray = compilerTools.pushToArray;
   var wrapByDoubleQuote = compilerTools.wrapByDoubleQuote;
   var TMP_DECLARATION = ['var t;'];
@@ -6030,9 +6156,9 @@ xtemplateCompiler = function (exports) {
   var BUFFER_APPEND = 'buffer.data += {value};';
   var BUFFER_WRITE_ESCAPED = 'buffer = buffer.writeEscaped({value});';
   var RETURN_BUFFER = 'return buffer;';
-  var XTemplateRuntime = xtemplateRuntime;
-  var parser = xtemplateCompilerParser;
-  parser.yy = xtemplateCompilerAst;
+  var XTemplateRuntime = xtemplate420Runtime;
+  var parser = xtemplate420CompilerParser;
+  parser.yy = xtemplate420CompilerAst;
   var nativeCode = [];
   var substitute = util.substitute;
   var each = util.each;
@@ -6147,6 +6273,7 @@ xtemplateCompiler = function (exports) {
     var params = func.params;
     var hash = func.hash;
     var funcParams = [];
+    var isSetFunction = func.id.string === 'set';
     if (params) {
       each(params, function (param) {
         var nextIdNameCode = self[param.type](param);
@@ -6156,13 +6283,27 @@ xtemplateCompiler = function (exports) {
     }
     var funcHash = [];
     if (hash) {
-      each(hash.value, function (v, key) {
-        var nextIdNameCode = self[v.type](v);
-        pushToArray(source, nextIdNameCode.source);
-        funcHash.push([
-          wrapByDoubleQuote(key),
-          nextIdNameCode.exp
-        ]);
+      each(hash.value, function (h) {
+        var v = h[1];
+        var key = h[0];
+        var vCode = self[v.type](v);
+        pushToArray(source, vCode.source);
+        if (isSetFunction) {
+          var resolvedParts = compilerTools.convertIdPartsToRawAccessor(self, source, key.parts).resolvedParts;
+          funcHash.push({
+            key: resolvedParts,
+            depth: key.depth,
+            value: vCode.exp
+          });
+        } else {
+          if (key.parts.length !== 1 || typeof key.parts[0] !== 'string') {
+            throw new Error('invalid hash parameter');
+          }
+          funcHash.push([
+            wrapByDoubleQuote(key.string),
+            vCode.exp
+          ]);
+        }
       });
     }
     var exp = '';
@@ -6174,11 +6315,18 @@ xtemplateCompiler = function (exports) {
         exp += ',params:[' + funcParams.join(',') + ']';
       }
       if (funcHash.length) {
-        var hashStr = '';
-        util.each(funcHash, function (h) {
-          hashStr += ',' + h[0] + ':' + h[1];
-        });
-        exp += ',hash:{' + hashStr.slice(1) + '}';
+        var hashStr = [];
+        if (isSetFunction) {
+          util.each(funcHash, function (h) {
+            hashStr.push('{key:[' + h.key.join(',') + '],value:' + h.value + ', depth:' + h.depth + '}');
+          });
+          exp += ',hash: [' + hashStr.join(',') + ']';
+        } else {
+          util.each(funcHash, function (h) {
+            hashStr.push(h[0] + ':' + h[1]);
+          });
+          exp += ',hash: {' + hashStr.join(',') + '}';
+        }
       }
       if (fn) {
         exp += ',fn: ' + fn;
@@ -6259,8 +6407,8 @@ xtemplateCompiler = function (exports) {
     }
     var isModule = self.config.isModule;
     if (idString === 'include' || idString === 'parse' || idString === 'extend') {
-      if (!func.params || func.params.length !== 1) {
-        throw new Error('include/parse/extend can only has one parameter!');
+      if (!func.params || func.params.length > 2) {
+        throw new Error('include/parse/extend can only has at most two parameter!');
       }
     }
     if (isModule) {
@@ -6351,14 +6499,14 @@ xtemplateCompiler = function (exports) {
         source: source
       };
     },
-    jsonExpression: function (e) {
-      var json = e.json;
-      var len = json.length;
+    objectExpression: function (e) {
+      var obj = e.obj;
+      var len = obj.length;
       var r;
       var source = [];
       var exp = [];
       for (var i = 0; i < len; i++) {
-        var item = json[i];
+        var item = obj[i];
         r = this[item[1].type](item[1]);
         pushToArray(source, r.source);
         exp.push(wrapByDoubleQuote(item[0]) + ': ' + r.exp);
@@ -6452,9 +6600,18 @@ xtemplateCompiler = function (exports) {
             for (var i = 1; i < resolvedParts.length; i++) {
               resolvedParts[i] = '[' + resolvedParts[i] + ']';
             }
+            var value;
+            if (loose) {
+              value = compilerTools.genStackJudge(resolvedParts.slice(1), resolvedParts[0]);
+            } else {
+              value = resolvedParts[0];
+              for (var ri = 1; ri < resolvedParts.length; ri++) {
+                value += resolvedParts[ri];
+              }
+            }
             source.push(substitute(ASSIGN_STATEMENT, {
               lhs: idName,
-              value: compilerTools.genStackJudge(resolvedParts.slice(1), resolvedParts[0])
+              value: value
             }));
           } else {
             source.push(substitute(ASSIGN_STATEMENT, {
@@ -6548,10 +6705,10 @@ xtemplateCompiler = function (exports) {
   exports = compiler;
   return exports;
 }();
-xtemplate = function (exports) {
-  var XTemplateRuntime = xtemplateRuntime;
+xtemplate420Index = function (exports) {
+  var XTemplateRuntime = xtemplate420Runtime;
   var util = XTemplateRuntime.util;
-  var Compiler = xtemplateCompiler;
+  var Compiler = xtemplate420Compiler;
   var compile = Compiler.compile;
   function XTemplate(tpl, config) {
     var tplType = typeof tpl;
@@ -6595,7 +6752,6 @@ xtemplate = function (exports) {
   exports = util.mix(XTemplate, {
     config: XTemplateRuntime.config,
     compile: compile,
-    version: '4.0.3',
     Compiler: Compiler,
     Scope: XTemplateRuntime.Scope,
     Runtime: XTemplateRuntime,
@@ -6604,5 +6760,6 @@ xtemplate = function (exports) {
   });
   return exports;
 }();
-module.exports = xtemplate;
-});
+module.exports = xtemplate420Index;
+};
+})();

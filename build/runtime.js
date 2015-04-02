@@ -1,20 +1,30 @@
 /*
-Copyright 2014, xtemplate@4.0.3
+Copyright 2015, @ali/xtemplate@4.2.0
 MIT Licensed
-build time: Mon, 29 Dec 2014 08:04:25 GMT
+build time: Thu, 02 Apr 2015 08:44:29 GMT
 */
-define("kg/xtemplate/4.0.3/runtime",[],function(require,exports,module) {
+;(function() {
+if(window.KISSY){
+ KISSY.add("kg/xtemplate/4.2.0/runtime", [],function(S, require, exports, module){
+ _xt(require, exports, module);
+});
+ } else if (window.define){
+ define("kg/xtemplate/4.2.0/runtime", [], _xt);
+}else{
+throw new Error("Can't found any module manager, such like Kissy CMD AMD SeaJS and etc.");
+};
+function _xt(require, exports, module) {
 
 /*
 combined modules:
-xtemplate/runtime
-xtemplate/runtime/util
-xtemplate/runtime/commands
-xtemplate/runtime/scope
-xtemplate/runtime/linked-buffer
+xtemplate/4.2.0/runtime
+xtemplate/4.2.0/runtime/util
+xtemplate/4.2.0/runtime/commands
+xtemplate/4.2.0/runtime/scope
+xtemplate/4.2.0/runtime/linked-buffer
 */
-var xtemplateRuntimeUtil, xtemplateRuntimeScope, xtemplateRuntimeLinkedBuffer, xtemplateRuntimeCommands, xtemplateRuntime;
-xtemplateRuntimeUtil = function (exports) {
+var xtemplate420RuntimeUtil, xtemplate420RuntimeScope, xtemplate420RuntimeLinkedBuffer, xtemplate420RuntimeCommands, xtemplate420Runtime;
+xtemplate420RuntimeUtil = function (exports) {
   // http://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
   // http://wonko.com/post/html-escaping
   var htmlEntities = {
@@ -82,8 +92,10 @@ xtemplateRuntimeUtil = function (exports) {
       return object;
     },
     mix: function (t, s) {
-      for (var p in s) {
-        t[p] = s[p];
+      if (s) {
+        for (var p in s) {
+          t[p] = s[p];
+        }
       }
       return t;
     },
@@ -131,7 +143,7 @@ xtemplateRuntimeUtil = function (exports) {
   };
   return exports;
 }();
-xtemplateRuntimeScope = function (exports) {
+xtemplate420RuntimeScope = function (exports) {
   function Scope(data, affix, parent) {
     if (data !== undefined) {
       this.data = data;
@@ -282,8 +294,8 @@ xtemplateRuntimeScope = function (exports) {
   exports = Scope;
   return exports;
 }();
-xtemplateRuntimeLinkedBuffer = function (exports) {
-  var util = xtemplateRuntimeUtil;
+xtemplate420RuntimeLinkedBuffer = function (exports) {
+  var util = xtemplate420RuntimeUtil;
   function Buffer(list, next, tpl) {
     this.list = list;
     this.init();
@@ -407,9 +419,9 @@ xtemplateRuntimeLinkedBuffer = function (exports) {
   exports = LinkedBuffer;
   return exports;
 }();
-xtemplateRuntimeCommands = function (exports) {
-  var Scope = xtemplateRuntimeScope;
-  var util = xtemplateRuntimeUtil;
+xtemplate420RuntimeCommands = function (exports) {
+  var Scope = xtemplate420RuntimeScope;
+  var util = xtemplate420RuntimeUtil;
   var commands = {
     range: function (scope, option) {
       var params = option.params;
@@ -525,7 +537,27 @@ xtemplateRuntimeCommands = function (exports) {
       return buffer;
     },
     set: function (scope, option, buffer) {
-      scope.mix(option.hash);
+      var hash = option.hash;
+      var len = hash.length;
+      for (var i = 0; i < len; i++) {
+        var h = hash[i];
+        var parts = h.key;
+        var depth = h.depth;
+        var value = h.value;
+        if (parts.length === 1) {
+          var root = scope.root;
+          while (depth && root !== scope) {
+            scope = scope.parent;
+            --depth;
+          }
+          scope.set(parts[0], value);
+        } else {
+          var last = scope.resolve(parts.slice(0, -1), depth);
+          if (last) {
+            last[parts[parts.length - 1]] = value;
+          }
+        }
+      }
       return buffer;
     },
     include: 1,
@@ -622,12 +654,12 @@ xtemplateRuntimeCommands = function (exports) {
   exports = commands;
   return exports;
 }();
-xtemplateRuntime = function (exports) {
-  var util = xtemplateRuntimeUtil;
-  var nativeCommands = xtemplateRuntimeCommands;
+xtemplate420Runtime = function (exports) {
+  var util = xtemplate420RuntimeUtil;
+  var nativeCommands = xtemplate420RuntimeCommands;
   var commands = {};
-  var Scope = xtemplateRuntimeScope;
-  var LinkedBuffer = xtemplateRuntimeLinkedBuffer;
+  var Scope = xtemplate420RuntimeScope;
+  var LinkedBuffer = xtemplate420RuntimeLinkedBuffer;
   function TplWrap(name, runtime, root, scope, buffer, originalName, fn, parent) {
     this.name = name;
     this.originalName = originalName || name;
@@ -682,7 +714,12 @@ xtemplateRuntime = function (exports) {
       caller = scope.resolve(parts.slice(0, -1), depth);
       fn = caller[parts[parts.length - 1]];
       if (fn) {
-        return fn.apply(caller, option.params || []);
+        try {
+          return fn.apply(caller, option.params || []);
+        } catch (err) {
+          buffer.error('Execute function `' + parts.join('.') + '` Error: ' + err.message);
+          return buffer;
+        }
       }
     }
     buffer.error('Command Not Found: ' + parts.join('.'));
@@ -727,7 +764,6 @@ xtemplateRuntime = function (exports) {
         return globalConfig;
       }
     },
-    version: '4.0.3',
     nativeCommands: nativeCommands,
     utils: utils,
     util: util,
@@ -813,6 +849,27 @@ xtemplateRuntime = function (exports) {
       return buffer.end();
     }
   }
+  function getIncludeScope(scope, option, buffer) {
+    var params = option.params;
+    if (!params[0]) {
+      return buffer.error('include command required a non-empty parameter');
+    }
+    var newScope = scope;
+    var newScopeData = params[1];
+    var hash = option.hash;
+    if (hash) {
+      if (newScopeData) {
+        newScopeData = util.mix({}, newScopeData);
+      } else {
+        newScopeData = {};
+      }
+      util.mix(newScopeData, hash);
+    }
+    if (newScopeData) {
+      newScope = new Scope(newScopeData, undefined, scope);
+    }
+    return newScope;
+  }
   XTemplateRuntime.prototype = {
     constructor: XTemplateRuntime,
     Scope: Scope,
@@ -830,32 +887,10 @@ xtemplateRuntime = function (exports) {
       config.commands[commandName] = fn;
     },
     include: function (scope, option, buffer, tpl) {
-      var params = option.params;
-      var newScope;
-      newScope = scope;
-      var hash = option.hash;
-      var escape = option && option.escape;
-      if (hash) {
-        newScope = new Scope(hash, undefined, scope);
-      }
-      if (!params[0]) {
-        return buffer.error('include command required a non-empty parameter');
-      }
-      buffer = includeInternal(this, newScope, escape, buffer, tpl, params[0]);
-      return buffer;
+      return includeInternal(this, getIncludeScope(scope, option, buffer), option.escape, buffer, tpl, option.params[0]);
     },
     includeModule: function (scope, option, buffer, tpl) {
-      var params = option.params;
-      var newScope = scope;
-      var hash = option.hash;
-      if (hash) {
-        newScope = new Scope(hash, undefined, scope);
-      }
-      if (!params[0]) {
-        return buffer.error('include command required a non-empty parameter');
-      }
-      buffer = includeModuleInternal(this, newScope, buffer, tpl, params[0]);
-      return buffer;
+      return includeModuleInternal(this, getIncludeScope(scope, option, buffer), buffer, tpl, option.params[0]);
     },
     render: function (data, option, callback) {
       var html = '';
@@ -909,5 +944,6 @@ xtemplateRuntime = function (exports) {
   exports = XTemplateRuntime;
   return exports;
 }();
-module.exports = xtemplateRuntime;
-});
+module.exports = xtemplate420Runtime;
+};
+})();
